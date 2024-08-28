@@ -1,0 +1,9 @@
+.nextflow*
+SRR*
+work
+.nf-test*
+tests/test_data/
+nextflow_results/
+manifest*
+ERS*
+results/
