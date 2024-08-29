@@ -30,6 +30,7 @@ def printHelp() {
 //
 
 include { COBS_SEARCH; POSTPROCESS_COBS } from './modules/cobs.nf'
+include { SKETCH_ASSEMBLY; SKETCH_DIST  } from './modules/sketchlib.nf'
 
 //
 // SUBWORKFLOWS
@@ -61,7 +62,11 @@ workflow {
     | COBS_SEARCH
     | groupTuple
     | POSTPROCESS_COBS
-
+    | set { cobs_matches }
+    
+    SKETCH_ASSEMBLY(MANIFEST_PARSE.out.assemblies)
+    | join( cobs_matches )
+    | SKETCH_DIST
 
 
 }

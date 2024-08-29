@@ -1,8 +1,8 @@
 process COBS_SEARCH {
     tag "${meta.ID}"
-    label "cpu_4"
-    label "mem_16"
-    label "time_1"
+    label "cpu_2"
+    label "mem_10"
+    label "time_30m"
 
     container 'quay.io/biocontainers/cobs:0.3.0--hdcf5f25_1'
 
@@ -33,6 +33,7 @@ process POSTPROCESS_COBS {
     tuple val(meta), path(matches)
 
     output:
+    tuple val(meta), path("combined_matches.txt"), emit: combined_cobs_matches
 
     script:
     //I want to stream - Calculate uncompressed size with xz before with --list and use that to allocate memory for cobs to stream from the index 
