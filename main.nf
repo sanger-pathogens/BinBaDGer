@@ -29,8 +29,11 @@ def printHelp() {
 // MODULES
 //
 
-include { COBS_SEARCH; POSTPROCESS_COBS } from './modules/cobs.nf'
-include { SKETCH_ASSEMBLY; SKETCH_DIST  } from './modules/sketchlib.nf'
+include { COBS_SEARCH; POSTPROCESS_COBS                               } from './modules/cobs.nf'
+include { SKETCH_ASSEMBLY; SKETCH_ANI_DIST; SKETCH_SUBSET; SKETCH_ALL_DIST; SKETCH_TREE; GENERATE_DIST_MATRIX  } from './modules/sketchlib.nf'
+include { EXTRACT_ASSEMBLYS_FROM_TAR } from './modules/extract_assembly.nf'
+include { PLOT_ANI; PLOT_TREE; SUBSELECT_GRAPH                        } from './modules/plotting.nf'
+include { TRIM_TREE                                                   } from './modules/treemmer.nf'
 
 //
 // SUBWORKFLOWS
@@ -50,9 +53,12 @@ workflow {
         exit 0
     }
 
-    //can decide if we want that logic from the onset
+    //set up channels for species cobs channel and assembly channels
     channel.fromPath( "${params.cobs_base}/${params.species}*.xz" )
     | set {species_cobs_ch}
+
+    channel.fromPath("${params.assembly_base}/${params.species}*.xz")
+    | set { species_assembly_ch }
 
 
     manifest = file(params.manifest)
@@ -63,10 +69,20 @@ workflow {
     | groupTuple
     | POSTPROCESS_COBS
     | set { cobs_matches }
-    
-    SKETCH_ASSEMBLY(MANIFEST_PARSE.out.assemblies)
-    | join( cobs_matches )
-    | SKETCH_DIST
 
+    cobs_matches.combine(species_assembly_ch)
+    | EXTRACT_ASSEMBLYS_FROM_TAR
+    | transpose
+    | groupTuple
+    | SKETCH_SUBSET
+    | set { subset_sketch }
+    
+    
+    SKETCH_ASSEMBLY(MANIFEST_PARSE.out.assemblies)  
+    | set { query_sketch }
+
+    subset_sketch.join(query_sketch)
+    | SKETCH_ALL_DIST
+    | set { all_dists }
 
 }

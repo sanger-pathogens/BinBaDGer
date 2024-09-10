@@ -1,10 +1,10 @@
 process SKETCH_ASSEMBLY {
     tag "${meta.ID}"
-    label "cpu_4"
+    label "cpu_1"
     label "mem_500M"
     label "time_30m"
 
-    container 'quay.io/ssd28/experimental/pp-sketchlib-rust:0.0.1'
+    container 'quay.io/ssd28/experimental/pp-sketchlib-rust:0.1.1_sd28_fix'
 
     input:
     tuple val(meta), path(assembly)
@@ -15,28 +15,75 @@ process SKETCH_ASSEMBLY {
     script:
     sketch_db = "${meta.ID}_sketch"
     """
-    sketchlib sketch -v -k 17 -s 1000 -o ${sketch_db} --threads ${task.cpus} --seq-files ${assembly}
+    sketchlib sketch -v -k 3,17,35 -o ${sketch_db} -s 1024 --seq-files ${assembly}
     """
 }
 
-process SKETCH_DIST {
+process SKETCH_SUBSET {
+    tag "${meta.ID}"
+    label "cpu_1"
+    label "mem_500M"
+    label "time_30m"
+
+    container 'quay.io/ssd28/experimental/pp-sketchlib-rust:0.1.1_sd28_fix'
+
+    input:
+    tuple val(meta), path(assemblies)
+
+    output:
+    tuple val(meta), path("${sketch_db}.skm"), path("${sketch_db}.skd"), emit: assemblies_sketch
+
+    script:
+    sketch_db = "${meta.ID}_sketch_subset"
+    """
+    sketchlib sketch -v -k 3,17,35 -o ${sketch_db} -s 1024 --seq-files ${assemblies}
+    """
+}
+
+process SKETCH_ANI_DIST {
     tag "${meta.ID}"
     label "cpu_4"
     label "mem_500M"
     label "time_30m"
 
-    container 'quay.io/ssd28/experimental/pp-sketchlib-rust:0.0.1'
+    //will reach out to get a real fix rather than my attempt at fixing the index problem
+    container 'quay.io/ssd28/experimental/pp-sketchlib-rust:0.1.1_sd28_fix'
 
     input:
-    tuple val(meta), path(query_skm), path(query_skd), path(matches)
+    tuple val(meta), path(ref_skm), path(ref_skd)
+    tuple val(meta), path(query_skm), path(query_skd)
 
     output:
-    tuple val(meta), path("dists.txt")
+    tuple val(meta), path("${meta.ID}_ani_data.tsv"), emit: query_ani
 
     script:
+    query_db = "${meta.ID}_sketch"
     """
-    sketchlib dist -v -k 17 --ani --threads ${task.cpus} --subset ${matches} ${params.sketchlib_db} > dists.txt
+    sketchlib dist -v -k 17 --ani ${ref_skm} ${query_db} > ${meta.ID}_ani_data.tsv
     """
+}
 
-    //sketchlib dist -v -k 17 --ani ${params.sketchlib_db} ${meta.ID}_sketch
+process SKETCH_ALL_DIST {
+    tag "${meta.ID}"
+    label "cpu_4"
+    label "mem_500M"
+    label "time_30m"
+
+    //will reach out to get a real fix rather than my attempt at fixing the index problem
+    container 'quay.io/ssd28/experimental/pp-sketchlib-rust:0.1.1_sd28_fix'
+
+    input:
+    tuple val(meta), path(ref_skm), path(ref_skd), path(query_skm), path(query_skd)
+
+    output:
+    tuple val(meta), path("${meta.ID}_total_core_data.tsv"), emit: total_ani
+
+    script:
+    query_db = "${meta.ID}_sketch"
+    """
+    sketchlib dist -v ${ref_skm} ${query_db} > ${meta.ID}_query_core_data.tsv
+    sketchlib dist -v ${ref_skm} > ${meta.ID}_ref_core_data.tsv
+    
+    cat ${meta.ID}_ref_core_data.tsv ${meta.ID}_query_core_data.tsv > ${meta.ID}_total_core_data.tsv 
+    """
 }
