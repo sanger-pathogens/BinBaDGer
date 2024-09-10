@@ -15,6 +15,8 @@ from scipy.spatial.distance import squareform
 from scipy.cluster.hierarchy import linkage, fcluster, dendrogram
 from networkx.algorithms.community import greedy_modularity_communities
 
+##### input parsing functions #####
+
 def read_phylip_distance(phylip_file):
     with open(phylip_file, 'r') as file:
         lines = file.readlines()
@@ -34,7 +36,11 @@ def read_phylip_distance(phylip_file):
 
     return num_samples, accessions, matrix
 
-def hierarchy_cluster(matrix, accessions, num_clusters, output_file, plot_clusters, method='average'):
+##### clustering functions #####
+
+### hierarchy ###
+
+def hierarchy_cluster(matrix, accessions, num_clusters=5, plot_clusters=True, method='average'):
     condensed_matrix = squareform(matrix)
 
     Z = linkage(condensed_matrix, method=method)
@@ -45,6 +51,47 @@ def hierarchy_cluster(matrix, accessions, num_clusters, output_file, plot_cluste
         plot_dendogram(Z, accessions, 'dendogram.png')
     
     return clusters
+
+def plot_dendogram(Z, accessions, output_file):
+    plt.figure(figsize=(15, 9))
+    dendrogram(Z, labels=accessions, leaf_font_size=5, orientation='left')
+    
+    plt.title("Dendrogram of Hierarchical Clustering")
+    plt.ylabel("Accessions")
+    plt.xlabel("Distance")
+    plt.tight_layout()
+    
+    # Save the plot as a PNG file
+    plt.savefig(output_file)
+    plt.close()
+
+### kmeans ###
+
+def kmeans_cluster(matrix):
+
+    mds = MDS(n_components=2, dissimilarity="precomputed", random_state=42)
+
+    transformed_matrix, optimal_k = optimal_number_of_clusters(matrix)
+
+    kmeans = KMeans(n_clusters=optimal_k, random_state=42)
+
+    kmeans.fit(transformed_matrix)
+
+    labels = kmeans.labels_
+
+    plt.figure(figsize=(15, 9))
+    plt.scatter(transformed_matrix[:, 0], transformed_matrix[:, 1], c=labels, cmap='tab20', marker='o', s=100, edgecolor='k')
+    plt.title("Kmeans Clustering")
+    plt.ylabel("MD1")
+    plt.xlabel("MD2")
+    plt.colorbar(label='Cluster label')
+
+    plt.savefig('Kmeans.png', dpi=300, bbox_inches='tight')
+    plt.close()
+
+    save_clusters(transformed_matrix, labels, 'kmeans_clusters.csv')
+
+    return labels
 
 def optimal_number_of_clusters(matrix, max_clusters=30):
     """
@@ -81,80 +128,42 @@ def optimal_number_of_clusters(matrix, max_clusters=30):
 
     return X_transformed, optimal_k
 
+### edge_based ###
 
-def kmeans_cluster(matrix):
-
-    mds = MDS(n_components=2, dissimilarity="precomputed", random_state=42)
-
-    transformed_matrix, optimal_k = optimal_number_of_clusters(matrix)
-
-    kmeans = KMeans(n_clusters=optimal_k, random_state=42)
-
-    kmeans.fit(transformed_matrix)
-
-    labels = kmeans.labels_
-
-    plt.figure(figsize=(15, 9))
-    plt.scatter(transformed_matrix[:, 0], transformed_matrix[:, 1], c=labels, cmap='tab20', marker='o', s=100, edgecolor='k')
-    plt.title("Kmeans Clustering")
-    plt.ylabel("MD1")
-    plt.xlabel("MD2")
-    plt.colorbar(label='Cluster label')
-
-    plt.savefig('Kmeans.png', dpi=300, bbox_inches='tight')
-    plt.close()
-
-    save_clusters(transformed_matrix, labels, 'kmeans_clusters.csv')
-
-    return labels
-
-def save_clusters(transformed_matrix, labels, filename='cluster_assignments.csv'):
-    df = pd.DataFrame({
-        'MDS Dimension 1': transformed_matrix[:, 0],
-        'MDS Dimension 2': transformed_matrix[:, 1],
-        'Cluster Label': labels
-    })
-
-    df.to_csv(filename, index=False)
-
-
-def plot_dendogram(Z, accessions, output_file):
-    plt.figure(figsize=(15, 9))
-    dendrogram(Z, labels=accessions, leaf_font_size=5, orientation='left')
-    
-    plt.title("Dendrogram of Hierarchical Clustering")
-    plt.ylabel("Accessions")
-    plt.xlabel("Distance")
-    plt.tight_layout()
-    
-    # Save the plot as a PNG file
-    plt.savefig(output_file)
-    plt.close()
-
-def edge_based_cluster(matrix, min, max, accessions):
+def edge_based_cluster(matrix, accessions, min=0.005):
     G = nx.Graph()
 
     for i in range(len(matrix)):
         for j in range(i + 1, len(matrix)):
-            if min <= matrix[i, j] <= max:
+            if min <= matrix[i, j]:
                 G.add_edge(i, j, weight=matrix[i, j])
 
     clusters = greedy_modularity_communities(G)
     
     return clusters
-                
 
-def relate_id_to_accession(clusters, accessions, output_file):
-    cluster_dict = {}
-    for idx, cluster in enumerate(clusters):
-        if cluster not in cluster_dict:
-            cluster_dict[cluster] = []
-        cluster_dict[cluster].append(accessions[idx])
-        print(f'Cluster {idx + 1}: {sorted(cluster)}')
-    
-    with open(output_file, 'w') as file:
-        for cluster, members in cluster_dict.items():
-            file.write(f"cluster {cluster}: {', '.join(members)}\n")
+### umap/HDBSCAN_based ###
+
+def umap_clustering(matrix):
+    clusterable_embedding= umap.UMAP(metric='precomputed', min_dist=0.0, n_components=2, n_neighbors=30, random_state=42).fit_transform(matrix)
+
+    labels = HDBSCAN(min_cluster_size=5).fit_predict(clusterable_embedding)
+
+    clustered = (labels >= 0)
+
+    plt.figure(figsize=(15, 9))
+    scatter = plt.scatter(clusterable_embedding[:, 0], clusterable_embedding[:, 1], c=clustered, cmap='tab20', marker='o', s=100, edgecolor='k')
+    plt.title('UMAP Clustering')
+    plt.xlabel('UMAP Dimension 1')
+    plt.ylabel('UMAP Dimension 2')
+    plt.colorbar(label='Cluster Label')
+    plt.savefig('cluster_embedding.png')
+    plt.close()
+
+    return clustered
+
+###### result plotting functions ######
+
 
 def plot_umap(matrix, labels, output_file):
     """
@@ -177,26 +186,18 @@ def plot_umap(matrix, labels, output_file):
     plt.colorbar(label='Cluster Label')
     plt.savefig(output_file)
     plt.close()
-   
-    return X_umap
 
-def umap_clustering(matrix):
-    clusterable_embedding= umap.UMAP(metric='precomputed', min_dist=0.0, n_components=2, n_neighbors=30, random_state=42).fit_transform(matrix)
 
-    labels = HDBSCAN(min_cluster_size=5).fit_predict(clusterable_embedding)
+###### cluster emission functions ######
 
-    clustered = (labels >= 0)
+def save_clusters(transformed_matrix, labels, filename='cluster_assignments.csv'):
+    df = pd.DataFrame({
+        'MDS Dimension 1': transformed_matrix[:, 0],
+        'MDS Dimension 2': transformed_matrix[:, 1],
+        'Cluster Label': labels
+    })
 
-    plt.figure(figsize=(15, 9))
-    scatter = plt.scatter(clusterable_embedding[:, 0], clusterable_embedding[:, 1], c=clustered, cmap='tab20', marker='o', s=100, edgecolor='k')
-    plt.title('UMAP Clustering')
-    plt.xlabel('UMAP Dimension 1')
-    plt.ylabel('UMAP Dimension 2')
-    plt.colorbar(label='Cluster Label')
-    plt.savefig('cluster_embedding.png')
-    plt.close()
-
-    return clustered
+    df.to_csv(filename, index=False)
 
 def select_closest_representatives(matrix, clusters, names, n_representatives=3):
     representatives = []
@@ -213,34 +214,68 @@ def select_closest_representatives(matrix, clusters, names, n_representatives=3)
    
     return representatives
 
+def relate_id_to_accession(clusters, accessions, output_file):
+    cluster_dict = {}
+    for idx, cluster in enumerate(clusters):
+        if cluster not in cluster_dict:
+            cluster_dict[cluster] = []
+        cluster_dict[cluster].append(accessions[idx])
+        print(f'Cluster {idx + 1}: {sorted(cluster)}')
+    
+    with open(output_file, 'w') as file:
+        for cluster, members in cluster_dict.items():
+            file.write(f"cluster {cluster}: {', '.join(members)}\n")
+
 def main():
+    #methods dict key = name of arg to trigger
+    # value = tuple (method_function, [required_args], [optional_args (set by default)])
+    methods_dict = {
+    'kmeans': (kmeans_cluster, ['matrix'], []),
+    'heirarchy': (hierarchy_cluster, ['matrix', 'accessions'], []),
+    'hdbscan': (umap_clustering, ['matrix'], []),
+    'edge_based': (edge_based_cluster, ['matrix', 'accessions'], []),
+    }
+
     parser = argparse.ArgumentParser(description='subsample from a matrix')
-    parser.add_argument("filename", type=str, help='Path to the Phylip file')
+    parser.add_argument("--filename", 
+    type=str, 
+    help='Path to the Phylip file'
+    ),
+    
+    parser.add_argument('--methods', 
+        nargs='+',
+        choices=methods_dict.keys() + ['all'],  # only allow valid methods and all trigger
+        required=True,
+        help="method or methods to use for clustering"
+    ),
 
     args = parser.parse_args()
 
     _, accessions, matrix = read_phylip_distance(args.filename)
 
-    #method = 'kmeans'
-    
-    #if method == 'kmeans':
-    kmeans_labels = kmeans_cluster(matrix)
-    plot_umap(matrix, kmeans_labels, 'kmeans_labels_umap.png')
 
-    #if method == 'fcluster':
-    hier_labels = hierarchy_cluster(matrix, accessions, 3, "clusters.txt", True, 'average')
-    plot_umap(matrix, hier_labels, 'hier_labels_umap.png')
-    
+    if 'all' in args.methods:
+        selected_methods = methods_dict.keys()
+    else:
+        selected_methods = args.methods
 
-    hdbscan_labels = umap_clustering(matrix)
-    plot_umap(matrix, hdbscan_labels, 'hdbscan_labels_umap.png')
+    for method_name in selected_methods:
+        method, required_args, optional_args = methods_dict[method_name]
 
-    clusters = edge_based_cluster(matrix, 0.0001, 0.01, accessions)
+        method_args = []
+        for arg in required_args:
+            if hasattr(args, arg) and getattr(args, arg) is not None:
+                method_args.append(getattr(args, arg))
 
-    relate_id_to_accession(clusters, accessions, "clusters.txt")
+        result = method(*method_args)  # Unpack the arguments
 
-    reps = select_closest_representatives(matrix, kmeans_labels, accessions, n_representatives=3)
-    print("Selected Representatives:", reps)
+        if method_name in ['kmeans', 'heirarchy', 'hdbscan']:
+            plot_umap(matrix, result, f'{method_name}_umap.png')
+        else:
+            relate_id_to_accession(clusters, accessions, "clusters.txt")
+
+
+    #reps = select_closest_representatives(matrix, kmeans_labels, accessions, n_representatives=3)
 
 if __name__ == "__main__":
     main()
