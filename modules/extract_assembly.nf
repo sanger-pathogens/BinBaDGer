@@ -4,8 +4,6 @@ process EXTRACT_ASSEMBLYS_FROM_TAR {
     label "mem_1"
     label "time_30m"
 
-    publishDir "${params.outdir}/plots/${meta.ID}", mode: 'copy', overwrite: true
-
     container 'quay.io/sangerpathogens/python_graphics:1.1.3'
 
     input:
