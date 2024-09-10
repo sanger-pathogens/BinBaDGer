@@ -129,36 +129,20 @@ def optimal_number_of_clusters(matrix, max_clusters=30):
 
 ### edge_based ###
 
-def edge_based_cluster(matrix, accessions, min_weight):
+def edge_based_cluster(matrix, accessions, threshold):
     G = nx.Graph()
     
     num_nodes = len(matrix)
     
     for i in range(num_nodes):
         for j in range(i + 1, num_nodes):
-            if matrix[i, j] >= min_weight:
+            if matrix[i, j] < threshold:
                 G.add_edge(i, j, weight=matrix[i, j])
     
     clusters = greedy_modularity_communities(G)
+    
+    plot_network_subclusters(clusters, G)
 
-    pos = nx.spring_layout(G)  # Layout for nodes
-    
-    # Create a color map for clusters
-    cluster_colors = plt.cm.get_cmap('tab10', len(clusters))  # Change 'tab10' to another colormap if needed
-    node_color = []
-    for node in G.nodes():
-        for idx, cluster in enumerate(clusters):
-            if node in cluster:
-                node_color.append(cluster_colors(idx))
-                break
-    
-    plt.figure(figsize=(15, 9))
-    nx.draw(G, pos, with_labels=True, node_color=node_color, edge_color='gray', node_size=500, font_size=10, font_color='white', cmap='viridis')
-    
-    plt.title('Graph Visualization with Clusters')
-    plt.savefig('edge_network.png')
-    plt.close()
-    
     return clusters
 
 ### umap/HDBSCAN_based ###
@@ -183,7 +167,6 @@ def umap_clustering(matrix):
 
 ###### result plotting functions ######
 
-
 def plot_umap(matrix, labels, output_file):
     """
     Perform UMAP and plot clusters.
@@ -204,6 +187,39 @@ def plot_umap(matrix, labels, output_file):
     plt.ylabel('UMAP Dimension 2')
     plt.colorbar(label='Cluster Label')
     plt.savefig(output_file)
+    plt.close()
+
+def plot_network_subclusters(clusters, G):
+    num_clusters = len(clusters)
+    
+    # Determine grid size
+    grid_size = int(np.ceil(np.sqrt(num_clusters)))
+    
+    # Create subplots
+    fig, axes = plt.subplots(grid_size, grid_size, figsize=(15, 15))
+    axes = axes.flatten()
+    
+    # Create a color map for clusters
+    cluster_colors = plt.cm.get_cmap('tab10', num_clusters)
+    
+    for idx, (cluster, ax) in enumerate(zip(clusters, axes)):
+        subgraph = G.subgraph(cluster)
+        pos = nx.spring_layout(subgraph, seed=42 + idx)  # Different seed for each cluster for separation
+        
+        # Draw the subgraph
+        nx.draw(subgraph, pos, with_labels=True, node_color=[cluster_colors(idx)] * len(cluster), 
+                edge_color=[cluster_colors(idx)] * len(subgraph.edges), node_size=500, font_size=10, 
+                font_color='white', ax=ax)
+        
+        ax.set_title(f'Cluster {idx + 1}')
+        ax.axis('off')  # Turn off axis
+    
+    # Hide any unused subplots
+    for j in range(num_clusters, len(axes)):
+        axes[j].axis('off')
+    
+    plt.tight_layout()
+    plt.savefig('edge_network.png')
     plt.close()
 
 
@@ -275,7 +291,7 @@ def main():
     context = {
     'matrix': matrix,
     'accessions': accessions,
-    'minimum_edge': 0.005,
+    'minimum_edge': 0.0005,
     }
 
 
