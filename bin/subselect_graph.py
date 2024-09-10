@@ -40,7 +40,7 @@ def read_phylip_distance(phylip_file):
 
 ### hierarchy ###
 
-def hierarchy_cluster(matrix, accessions, num_clusters=5, plot_clusters=True, method='average'):
+def hierarchy_cluster(matrix, accessions, num_clusters=3, plot_clusters=True, method='average'):
     condensed_matrix = squareform(matrix)
 
     Z = linkage(condensed_matrix, method=method)
@@ -123,22 +123,41 @@ def optimal_number_of_clusters(matrix, max_clusters=30):
     plt.grid(True)
     plt.savefig('optimal_k.png')
     optimal_k = np.argmax(silhouette_scores) + 2  # +2 because range starts from 2
-    print(f"The optimal number of clusters is {optimal_k} with a silhouette score of {silhouette_scores[optimal_k-2]:.4f}")
     plt.close()
 
     return X_transformed, optimal_k
 
 ### edge_based ###
 
-def edge_based_cluster(matrix, accessions, min):
+def edge_based_cluster(matrix, accessions, min_weight):
     G = nx.Graph()
-
-    for i in range(len(matrix)):
-        for j in range(i + 1, len(matrix)):
-            if min <= matrix[i, j]:
+    
+    num_nodes = len(matrix)
+    
+    for i in range(num_nodes):
+        for j in range(i + 1, num_nodes):
+            if matrix[i, j] >= min_weight:
                 G.add_edge(i, j, weight=matrix[i, j])
-
+    
     clusters = greedy_modularity_communities(G)
+
+    pos = nx.spring_layout(G)  # Layout for nodes
+    
+    # Create a color map for clusters
+    cluster_colors = plt.cm.get_cmap('tab10', len(clusters))  # Change 'tab10' to another colormap if needed
+    node_color = []
+    for node in G.nodes():
+        for idx, cluster in enumerate(clusters):
+            if node in cluster:
+                node_color.append(cluster_colors(idx))
+                break
+    
+    plt.figure(figsize=(15, 9))
+    nx.draw(G, pos, with_labels=True, node_color=node_color, edge_color='gray', node_size=500, font_size=10, font_color='white', cmap='viridis')
+    
+    plt.title('Graph Visualization with Clusters')
+    plt.savefig('edge_network.png')
+    plt.close()
     
     return clusters
 
