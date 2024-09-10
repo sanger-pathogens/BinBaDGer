@@ -87,3 +87,49 @@ process SKETCH_ALL_DIST {
     cat ${meta.ID}_ref_core_data.tsv ${meta.ID}_query_core_data.tsv > ${meta.ID}_total_core_data.tsv 
     """
 }
+
+process SKETCH_TREE {
+    tag "${meta.ID}"
+    label "cpu_4"
+    label "mem_8"
+    label "time_1"
+
+    //this is all testing so using experimental repo
+    container 'quay.io/ssd28/experimental/rapidnj:2.3.2'
+
+    publishDir "${params.outdir}/tree/${meta.ID}", mode: 'copy', overwrite: true
+
+    input:
+    tuple val(meta), path(total_tsv)
+
+    output:
+    tuple val(meta), path("*.nwk"), emit: tree
+
+    script:
+    """
+    ani_tree_tools.py --dist_tsv_path ${total_tsv} --output_path out/ --meta_ID ${meta.ID} --build_tree
+    """
+}
+
+process GENERATE_DIST_MATRIX {
+    tag "${meta.ID}"
+    label "cpu_4"
+    label "mem_8"
+    label "time_1"
+
+    //for ppsketchlib
+    container 'quay.io/ssd28/experimental/rapidnj:2.3.2-c1'
+
+    publishDir "${params.outdir}/tree/${meta.ID}", mode: 'copy', overwrite: true
+
+    input:
+    tuple val(meta), path(total_tsv)
+
+    output:
+    tuple val(meta), path("*.phylip"), emit: matrix
+
+    script:
+    """
+    ani_tree_tools.py --dist_tsv_path ${total_tsv} --output_path out/ --meta_ID ${meta.ID}
+    """
+}
