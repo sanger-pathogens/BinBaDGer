@@ -62,6 +62,6 @@ process SUBSELECT_GRAPH {
 
     script:
     """
-    subselect_graph.py ${phylip} --methods all > log.txt
+    subselect_graph.py --phylip ${phylip} --methods all > log.txt
     """
 }

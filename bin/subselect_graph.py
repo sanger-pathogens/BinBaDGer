@@ -130,7 +130,7 @@ def optimal_number_of_clusters(matrix, max_clusters=30):
 
 ### edge_based ###
 
-def edge_based_cluster(matrix, accessions, min=0.005):
+def edge_based_cluster(matrix, accessions, min):
     G = nx.Graph()
 
     for i in range(len(matrix)):
@@ -233,25 +233,31 @@ def main():
     'kmeans': (kmeans_cluster, ['matrix'], []),
     'heirarchy': (hierarchy_cluster, ['matrix', 'accessions'], []),
     'hdbscan': (umap_clustering, ['matrix'], []),
-    'edge_based': (edge_based_cluster, ['matrix', 'accessions'], []),
+    'edge_based': (edge_based_cluster, ['matrix', 'accessions'], ['minimum_edge']),
     }
 
     parser = argparse.ArgumentParser(description='subsample from a matrix')
-    parser.add_argument("--filename", 
+    parser.add_argument("--phylip", 
     type=str, 
     help='Path to the Phylip file'
     ),
     
     parser.add_argument('--methods', 
         nargs='+',
-        choices=methods_dict.keys() + ['all'],  # only allow valid methods and all trigger
+        choices=list(methods_dict.keys()) + ['all'],  # only allow valid methods and all trigger
         required=True,
         help="method or methods to use for clustering"
     ),
 
     args = parser.parse_args()
 
-    _, accessions, matrix = read_phylip_distance(args.filename)
+    _, accessions, matrix = read_phylip_distance(args.phylip)
+
+    context = {
+    'matrix': matrix,
+    'accessions': accessions,
+    'minimum_edge': 0.005,
+    }
 
 
     if 'all' in args.methods:
@@ -262,17 +268,17 @@ def main():
     for method_name in selected_methods:
         method, required_args, optional_args = methods_dict[method_name]
 
-        method_args = []
-        for arg in required_args:
-            if hasattr(args, arg) and getattr(args, arg) is not None:
-                method_args.append(getattr(args, arg))
+        method_args = [context[arg] for arg in required_args if arg in context]
 
-        result = method(*method_args)  # Unpack the arguments
+        #unused currently but can take args from context where needed
+        method_optional_args = [context[arg] for arg in optional_args if arg in context and context[arg] is not None]
+
+        result = method(*method_args, *method_optional_args)  # Unpack the arguments
 
         if method_name in ['kmeans', 'heirarchy', 'hdbscan']:
             plot_umap(matrix, result, f'{method_name}_umap.png')
         else:
-            relate_id_to_accession(clusters, accessions, "clusters.txt")
+            relate_id_to_accession(result, accessions, "clusters.txt")
 
 
     #reps = select_closest_representatives(matrix, kmeans_labels, accessions, n_representatives=3)
