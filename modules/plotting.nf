@@ -62,6 +62,6 @@ process SUBSELECT_GRAPH {
 
     script:
     """
-    subselect_graph.py --phylip ${phylip} --methods hdbscan > log.txt
+    subselect_graph.py --phylip ${phylip} --methods ${params.cluster_method} > log.txt
     """
 }
