@@ -148,9 +148,15 @@ def edge_based_cluster(matrix, accessions, threshold):
 ### umap/HDBSCAN_based ###
 
 def umap_clustering(matrix):
-    clusterable_embedding= umap.UMAP(metric='precomputed', min_dist=0.0, n_components=2, n_neighbors=30, random_state=42).fit_transform(matrix)
+    clusterable_embedding = umap.UMAP(
+        metric='precomputed', 
+        min_dist=0.0, 
+        n_components=2, 
+        n_neighbors=30, 
+        random_state=42
+        ).fit_transform(matrix)
 
-    labels = HDBSCAN(min_cluster_size=5).fit_predict(clusterable_embedding)
+    labels = HDBSCAN(min_cluster_size=5, min_samples=10,).fit_predict(clusterable_embedding)
 
     clustered = (labels >= 0)
 
