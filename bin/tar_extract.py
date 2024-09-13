@@ -49,8 +49,8 @@ def save_fasta(rname, rfa):
 
 # Helper function to extract sequences from multiple files based on index and save them
 def extract_sequences_from_files(file_list, selected_rnames):
-    for file in file_list:
-        for rname, rfa in iterate_over_batch(file, selected_rnames):
+    for tar in file_list:
+        for rname, rfa in iterate_over_batch(tar, selected_rnames):
             save_fasta(rname, rfa)
 
 # Function to read lists from files
