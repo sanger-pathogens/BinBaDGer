@@ -36,8 +36,6 @@ def iterate_over_batch(asms_fn, selected_rnames):
             rfa = f.read()
             yield rname, rfa
 
-    if skipped > 0:
-        logging.info(f"Skipping {skipped} references in {asms_fn}")
 
 # Function to save FASTA content to a file
 def save_fasta(rname, rfa):
