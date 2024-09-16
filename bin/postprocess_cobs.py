@@ -39,13 +39,13 @@ def sort_and_print_lines(lines, hits_to_keep, show_count, output_file):
 
     write_lines_to_file(selected_lines, show_count, output_file)
 
-def random_and_print_lines(lines, hits_to_keep, show_count, output_file, seed):
+def random_and_print_lines(lines, hits_to_keep, show_count, output_file, seed=None):
     """Randomly select and print up to N hits."""
-    
-    selected_lines = random.sample(lines, hits_to_keep)
     
     if seed is not None:
         random.seed(seed)
+    
+    selected_lines = random.sample(lines, hits_to_keep)
     
     # Print the selected lines
     write_lines_to_file(selected_lines, show_count, output_file)
