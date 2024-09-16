@@ -7,6 +7,7 @@ import seaborn as sns
 import pandas as pd
 import matplotlib.pyplot as plt
 import umap
+from collections import defaultdict
 
 from sklearn.manifold import MDS
 from sklearn.cluster import KMeans, HDBSCAN
@@ -256,10 +257,8 @@ def select_closest_representatives(matrix, clusters, names, n_representatives=3)
     return representatives
 
 def relate_id_to_accession(clusters, accessions, output_file):
-    cluster_dict = {}
+    cluster_dict = defaultdict(list)
     for idx, cluster in enumerate(clusters):
-        if cluster not in cluster_dict:
-            cluster_dict[cluster] = []
         cluster_dict[cluster].append(accessions[idx])
         print(f'Cluster {idx + 1}: {sorted(cluster)}')
     
