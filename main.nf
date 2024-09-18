@@ -84,5 +84,24 @@ workflow {
     subset_sketch.join(query_sketch)
     | SKETCH_ALL_DIST
     | set { all_dists }
+       
+    subset_sketch.join(query_sketch)
+    | SKETCH_ANI_DIST
+    | PLOT_ANI
 
+    if (params.sketch_total_ani) {  
+        if (params.generate_tree) {             
+            SKETCH_TREE(all_dists)
+            | PLOT_TREE
+
+            if (params.trim_tree) { 
+                TRIM_TREE(SKETCH_TREE.out.tree)
+            }
+        }
+
+        if (params.cluster_subselection) {
+            GENERATE_DIST_MATRIX(all_dists)
+            | SUBSELECT_GRAPH
+        } 
+    }
 }
