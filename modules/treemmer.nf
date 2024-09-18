@@ -16,6 +16,6 @@ process TRIM_TREE {
 
     script:
     """
-    Treemmer_v0.3.py ${newick} -X 10 --no_plot
+    Treemmer_v0.3.py ${newick} -X ${params.number_of_leaves} --no_plot
     """
 }
