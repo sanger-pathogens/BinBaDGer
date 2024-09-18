@@ -11,8 +11,8 @@ def plot_tree(newick_file, output_file):
 def main():
     # Set up argument parsing
     parser = argparse.ArgumentParser(description="Save a phylogenetic tree to a PNG file from a Newick file.")
-    parser.add_argument('newick_file', type=str, required=True, help="Path to the Newick file.")
-    parser.add_argument('output_file', type=str, required=True, help="Path to the output PNG file.")
+    parser.add_argument('newick_file', type=str, help="Path to the Newick file.")
+    parser.add_argument('output_file', type=str, help="Path to the output PNG file.")
     args = parser.parse_args()
     
     # Plot the tree
