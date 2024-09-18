@@ -50,8 +50,7 @@ process SKETCH_ANI_DIST {
     container 'quay.io/ssd28/experimental/pp-sketchlib-rust:0.1.1_sd28_fix'
 
     input:
-    tuple val(meta), path(ref_skm), path(ref_skd)
-    tuple val(meta), path(query_skm), path(query_skd)
+    tuple val(meta), path(ref_skm), path(ref_skd), path(query_skm), path(query_skd)
 
     output:
     tuple val(meta), path("${meta.ID}_ani_data.tsv"), emit: query_ani
