@@ -25,12 +25,10 @@ def create_assembly_channels(LinkedHashMap row) {
     meta.ID = row.ID
 
     def assembly
-    if ( !(row.assembly == 'NA') ) {
-        if ( !file(row.assembly).exists() ) {
-            exit 1, "ERROR: Please check input samplesheet -> Assembly file does not exist!\n${row.assembly}"
-        }
-        assembly = file(row.assembly)
+    if ( !file(row.assembly).exists() ) {
+        exit 1, "ERROR: Please check input samplesheet -> Assembly file does not exist!\n${row.assembly}"
     }
+    assembly = file(row.assembly)
 
     return [ meta, assembly ]
 }
