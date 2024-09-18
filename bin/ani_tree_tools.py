@@ -5,7 +5,6 @@
 import sys
 import os
 import numpy as np
-import pandas as pd
 import pp_sketchlib
 import argparse
 from tree_builder import generate_phylogeny

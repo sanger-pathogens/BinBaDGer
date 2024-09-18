@@ -4,7 +4,6 @@ import pandas as pd
 import matplotlib.pyplot as plt
 import seaborn as sns
 import argparse
-import plotly.express as px
 
 def load_data(input_file):
     # Load the data from TSV
