@@ -25,7 +25,7 @@ def buildRapidNJ(phylip_path, meta_ID, tree_filename):
         sys.stderr.write("Could not run command " + rapidnj_cmd + "; returned code: " + str(e.returncode) + "\n")
         sys.exit(1)
     
-    tree = dendropy.Tree.get(path=f"{meta_ID}.nwk", schema="newick")
+    tree = dendropy.Tree.get(path=tree_filename, schema="newick")
     return tree
 
 def generate_phylogeny(phylip_path, meta_ID, tree_suffix, overwrite):
