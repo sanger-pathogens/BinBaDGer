@@ -3,7 +3,6 @@
 import argparse
 import networkx as nx
 import numpy as np
-import seaborn as sns
 import pandas as pd
 import matplotlib.pyplot as plt
 import umap
@@ -19,8 +18,8 @@ from networkx.algorithms.community import greedy_modularity_communities
 ##### input parsing functions #####
 
 def read_phylip_distance(phylip_file):
-    with open(phylip_file, 'r') as file:
-        lines = file.readlines()
+    with open(phylip_file, 'r') as phylip:
+        lines = phylip.readlines()
 
         #might be useful
         num_samples = int(lines[0].strip())
@@ -262,9 +261,9 @@ def relate_id_to_accession(clusters, accessions, output_file):
         cluster_dict[cluster].append(accessions[idx])
         print(f'Cluster {idx + 1}: {sorted(cluster)}')
     
-    with open(output_file, 'w') as file:
+    with open(output_file, 'w') as out:
         for cluster, members in cluster_dict.items():
-            file.write(f"cluster {cluster}: {', '.join(members)}\n")
+            out.write(f"cluster {cluster}: {', '.join(members)}\n")
 
 def main():
     #methods dict key = name of arg to trigger
@@ -278,7 +277,8 @@ def main():
 
     parser = argparse.ArgumentParser(description='subsample from a matrix')
     parser.add_argument("--phylip", 
-    type=str, 
+    type=str,
+    required=True,
     help='Path to the Phylip file'
     ),
     
