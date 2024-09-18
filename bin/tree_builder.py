@@ -18,7 +18,7 @@ def buildRapidNJ(phylip_path, meta_ID, tree_filename):
     
     try:
         subprocess.run(rapidnj_cmd, shell=True, check=True)
-        with open(meta_ID + ".raw", 'r') as f, open(f"{meta_ID}.nwk", 'w') as fo:
+        with open(meta_ID + ".raw", 'r') as f, open(tree_filename, 'w') as fo:
             for line in f:
                 fo.write(line.replace("'", ''))
     except subprocess.CalledProcessError as e:
