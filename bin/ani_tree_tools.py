@@ -77,8 +77,8 @@ if __name__ == "__main__":
     args = parser.parse_args()
 
     if args.phylip_path:
-        phylip_file = args.phylip_path
-        sys.stderr.write(f"Using provided PHYLIP file: {phylip_file}\n")
+        phylip_path = args.phylip_path
+        sys.stderr.write(f"Using provided PHYLIP file: {phylip_path}\n")
     else:
         # Read the TSV and process data
         ref_list, core_dist_mat, acc_dist_mat = read_tsv_to_structures(args.dist_tsv_path)
