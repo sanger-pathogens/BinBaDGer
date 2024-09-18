@@ -36,7 +36,7 @@ def generate_phylogeny(phylip_path, meta_ID, tree_suffix, overwrite):
         
         sys.stderr.write("Building phylogeny\n")
         
-        tree = buildRapidNJ(phylip_path, meta_ID)
+        tree = buildRapidNJ(phylip_path, meta_ID, tree_filename)
 
         tree.reroot_at_midpoint(update_bipartitions=True, suppress_unifurcations=False)
         
