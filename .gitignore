@@ -4,6 +4,6 @@ work
 .nf-test*
 tests/test_data/
 nextflow_results/
-manifest*
+manifest.csv
 ERS*
 results/
