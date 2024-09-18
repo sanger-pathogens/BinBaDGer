@@ -13,13 +13,13 @@ def remove_random_id(cobs_line):
     _, _, remainder = cobs_line.partition("_")
     return remainder
 
-def process_file(file_path):
+def process_cobs_file(file_path):
     """Process the file to collect identifiers and lines with valid hits."""
     identifiers = set()
     lines = []
 
-    with open(file_path, 'r') as file:
-        for line in file:
+    with open(file_path, 'r') as cobs_file:
+        for line in cobs_file:
             line = line.strip()
             if line.startswith('*'):
                 # Collect identifiers
@@ -71,16 +71,16 @@ def step_and_print_lines(lines, hits_to_keep, show_count, output_file, seed):
 def write_lines_to_file(selected_lines, show_count, output_file):
     seen_lines = set()
 
-    with open(output_file, 'w') as file:
+    with open(output_file, 'w') as out:
         for line in selected_lines:
             if show_count:
-                file.write(line)  # Writes the full line including the count
+                out.write(line)  # Writes the full line including the count
             else:
                 # Remove the kmer count before writing
                 line_without_count = "\t".join(line.split("\t")[:-1])
                 
                 if line_without_count not in seen_lines:
-                    file.write(line_without_count + "\n")
+                    out.write(line_without_count + "\n")
                     seen_lines.add(line_without_count)
 
 def process_cobs_output(hits_to_keep, input_files, show_count, selection_method, seed):
@@ -91,7 +91,7 @@ def process_cobs_output(hits_to_keep, input_files, show_count, selection_method,
 
     for file_path in input_files:
         # Collect identifiers and process lines from the file
-        _, file_lines = process_file(file_path)
+        _, file_lines = process_cobs_file(file_path)
         combined_lines.extend(file_lines)
     
     total_lines = len(combined_lines)
