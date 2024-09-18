@@ -85,7 +85,8 @@ workflow {
     | SKETCH_ALL_DIST
     | set { all_dists }
        
-    SKETCH_ANI_DIST(subset_sketch, query_sketch)
+    subset_sketch.join(query_sketch)
+    | SKETCH_ANI_DIST
     | PLOT_ANI
 
     if (params.sketch_total_ani) {  
