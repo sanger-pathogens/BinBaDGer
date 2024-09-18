@@ -43,4 +43,4 @@ def generate_phylogeny(phylip_path, meta_ID, tree_suffix, overwrite):
         tree.write(path=tree_filename, schema="newick", suppress_rooting=True, unquoted_underscores=True)
     
     else:
-        sys.stderr.write("NJ phylogeny already exists; add --overwrite to replace\n")
+        sys.stderr.write("NJ phylogeny already exists; set overwrite to 'True' to replace\n")
