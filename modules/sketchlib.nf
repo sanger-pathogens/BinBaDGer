@@ -130,6 +130,6 @@ process GENERATE_DIST_MATRIX {
 
     script:
     """
-    ani_tree_tools.py --dist_tsv_path ${total_tsv} --output_path out/ --meta_ID ${meta.ID}
+    ani_tree_tools.py --dist_tsv_path ${total_tsv} --meta_ID ${meta.ID}
     """
 }
