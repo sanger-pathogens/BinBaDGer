@@ -70,9 +70,8 @@ def generate_phylip_matrix(ref_list, matrix, meta_ID):
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(description="Process input files")
-    parser.add_argument('-r', '--dist_tsv_path', type=str, help='Input TSV file with Reference pairwise ANI data')
-    parser.add_argument('-o', '--output_path', type=str, help='path to save files')
-    parser.add_argument('--meta_ID', type=str, help='ID of dataset')
+    parser.add_argument('-r', '--dist_tsv_path', type=str, required=True, help='Input TSV file with Reference pairwise ANI data')
+    parser.add_argument('--meta_ID', type=str, required=True, help='ID of dataset')
     parser.add_argument('--build_tree', action='store_true', help='Option to build tree')
     parser.add_argument('--phylip_path', type=str, help='Optional: Pre-generated PHYLIP file path')
     args = parser.parse_args()
