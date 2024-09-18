@@ -311,7 +311,7 @@ def main():
         method_args = [context[arg] for arg in required_args if arg in context]
 
         #unused currently but can take args from context where needed
-        method_optional_args = [context[arg] for arg in optional_args if arg in context and context[arg] is not None]
+        method_optional_args = [context[arg] for arg in optional_args if arg in context]
 
         result = method(*method_args, *method_optional_args)  # Unpack the arguments
 
