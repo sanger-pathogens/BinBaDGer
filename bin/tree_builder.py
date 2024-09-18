@@ -5,7 +5,7 @@ import subprocess
 import os
 import sys
 
-def buildRapidNJ(phylip_path, meta_ID):
+def buildRapidNJ(phylip_path, meta_ID, tree_filename):
     """Use rapidNJ for more rapid tree building
     Takes a path to phylip, system calls to rapidnj executable, loads tree as
     dendropy object (cleaning quotes in node names), removes temporary files.
