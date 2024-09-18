@@ -81,7 +81,7 @@ if __name__ == "__main__":
         sys.stderr.write(f"Using provided PHYLIP file: {phylip_file}\n")
     else:
         # Read the TSV and process data
-        ref_list, dist_mat = read_tsv_to_structures(args.dist_tsv_path)
+        ref_list, core_dist_mat, acc_dist_mat = read_tsv_to_structures(args.dist_tsv_path)
         matrix = update_distance_matrices(dist_mat)
 
         # Generate the PHYLIP matrix
