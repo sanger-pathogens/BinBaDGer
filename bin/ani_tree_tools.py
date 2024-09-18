@@ -35,6 +35,45 @@ def read_tsv_to_structures(reference_tsv):
 
     return ref_list, dist_mat
 
+def read_tsv_to_core_accession(reference_tsv):
+    # Initialize the structures
+    ref_list = []
+    dist_mat = []
+    acc_dist_mat = []
+
+    # Read and process the reference TSV
+    with open(reference_tsv, 'r') as ref_file:
+        for line in ref_file:
+            # Split the line by tabs
+            sample, reference, core_dist, acc_dist = line.strip().split('\t')
+            # Add the unique samples to ref_list
+            if sample not in ref_list:
+                ref_list.append(sample)
+            if reference not in ref_list:
+                ref_list.append(reference)
+            # Convert core_dist and acc_dist to floats
+            core_dist = float(core_dist)
+            acc_dist = float(acc_dist)
+
+            # Initialize matrices if necessary
+            if len(core_dist_mat) == 0:
+                num_samples = len(ref_list)
+                core_dist_mat = np.zeros((num_samples, num_samples))
+                acc_dist_mat = np.zeros((num_samples, num_samples))
+
+            # Update the distance matrices
+            sample_idx = ref_list.index(sample)
+            reference_idx = ref_list.index(reference)
+
+            core_dist_mat[sample_idx, reference_idx] = core_dist
+            core_dist_mat[reference_idx, sample_idx] = core_dist
+
+            acc_dist_mat[sample_idx, reference_idx] = acc_dist
+            acc_dist_mat[reference_idx, sample_idx] = acc_dist
+
+    return ref_list, core_dist_mat, acc_dist_mat
+
+
 def update_distance_matrices(dist_mat, threads = 1):
     """Convert distances from long form (1 matrix with n_comparisons rows and 2 columns)
     to a square form (2 NxN matrices)
@@ -81,11 +120,11 @@ if __name__ == "__main__":
         sys.stderr.write(f"Using provided PHYLIP file: {phylip_path}\n")
     else:
         # Read the TSV and process data
-        ref_list, core_dist_mat, acc_dist_mat = read_tsv_to_structures(args.dist_tsv_path)
-        matrix = update_distance_matrices(dist_mat)
+        ref_list, core_dist_mat, acc_dist_mat = read_tsv_to_core_accession(args.dist_tsv_path)
+        #matrix = update_distance_matrices(dist_mat)
 
         # Generate the PHYLIP matrix
-        phylip_path = generate_phylip_matrix(ref_list, matrix, args.meta_ID)
+        phylip_path = generate_phylip_matrix(ref_list, core_dist_mat, args.meta_ID)
 
     # Conditionally build the tree if --build_tree is specified
     if args.build_tree:
