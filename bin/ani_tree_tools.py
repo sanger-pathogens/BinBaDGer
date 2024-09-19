@@ -38,8 +38,7 @@ def read_tsv_to_structures(reference_tsv):
 def read_tsv_to_core_accession(reference_tsv):
     # Initialize the structures
     ref_list = []
-    dist_mat = []
-    acc_dist_mat = []
+    distances = []
 
     # Read and process the reference TSV
     with open(reference_tsv, 'r') as ref_file:
@@ -51,25 +50,23 @@ def read_tsv_to_core_accession(reference_tsv):
                 ref_list.append(sample)
             if reference not in ref_list:
                 ref_list.append(reference)
-            # Convert core_dist and acc_dist to floats
-            core_dist = float(core_dist)
-            acc_dist = float(acc_dist)
+            distances.append((sample, reference, float(core_dist), float(acc_dist)))
 
-            # Initialize matrices if necessary
-            if len(core_dist_mat) == 0:
-                num_samples = len(ref_list)
-                core_dist_mat = np.zeros((num_samples, num_samples))
-                acc_dist_mat = np.zeros((num_samples, num_samples))
+    # Initialize matrices
+    num_samples = len(ref_list)
+    core_dist_mat = np.zeros((num_samples, num_samples))
+    acc_dist_mat = np.zeros((num_samples, num_samples))
 
-            # Update the distance matrices
-            sample_idx = ref_list.index(sample)
-            reference_idx = ref_list.index(reference)
+    # Update the distance matrices
+    for sample, reference, core_dist, acc_dist in distances:
+        sample_idx = ref_list.index(sample)
+        reference_idx = ref_list.index(reference)
 
-            core_dist_mat[sample_idx, reference_idx] = core_dist
-            core_dist_mat[reference_idx, sample_idx] = core_dist
+        core_dist_mat[sample_idx, reference_idx] = core_dist
+        core_dist_mat[reference_idx, sample_idx] = core_dist
 
-            acc_dist_mat[sample_idx, reference_idx] = acc_dist
-            acc_dist_mat[reference_idx, sample_idx] = acc_dist
+        acc_dist_mat[sample_idx, reference_idx] = acc_dist
+        acc_dist_mat[reference_idx, sample_idx] = acc_dist
 
     return ref_list, core_dist_mat, acc_dist_mat
 
