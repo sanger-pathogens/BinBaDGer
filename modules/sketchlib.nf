@@ -50,6 +50,10 @@ process SKETCH_ANI_DIST {
     container 'quay.io/ssd28/experimental/pp-sketchlib-rust:0.1.2_sd28_fix'
 
     input:
+    // the query_skm and the query_skd relate to parts of a sketchlib database. The skm is the metadata
+    // and the skd is the data itself. These together make a sketch which can be compared to other sketches
+    // or in the case of a multisketch pairwise across all assemblys or reads within that sketch
+    // https://ftp.ebi.ac.uk/pub/databases/AllTheBacteria/Releases/0.2/indexes/README.md
     tuple val(meta), path(subset), path(query_skm), path(query_skd)
 
     output:
