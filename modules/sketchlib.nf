@@ -1,10 +1,10 @@
 process SKETCH_ASSEMBLY {
     tag "${meta.ID}"
-    label "cpu_1"
+    label "cpu_2"
     label "mem_500M"
     label "time_30m"
 
-    container 'quay.io/ssd28/experimental/pp-sketchlib-rust:0.1.1_sd28_fix'
+    container 'quay.io/ssd28/experimental/pp-sketchlib-rust:0.1.2_sd28_fix'
 
     input:
     tuple val(meta), path(assembly)
@@ -21,11 +21,11 @@ process SKETCH_ASSEMBLY {
 
 process SKETCH_SUBSET {
     tag "${meta.ID}"
-    label "cpu_1"
+    label "cpu_2"
     label "mem_500M"
     label "time_30m"
 
-    container 'quay.io/ssd28/experimental/pp-sketchlib-rust:0.1.1_sd28_fix'
+    container 'quay.io/ssd28/experimental/pp-sketchlib-rust:0.1.2_sd28_fix'
 
     input:
     tuple val(meta), path(assemblies)
@@ -42,15 +42,15 @@ process SKETCH_SUBSET {
 
 process SKETCH_ANI_DIST {
     tag "${meta.ID}"
-    label "cpu_4"
+    label "cpu_2"
     label "mem_500M"
     label "time_30m"
 
     //will reach out to get a real fix rather than my attempt at fixing the index problem
-    container 'quay.io/ssd28/experimental/pp-sketchlib-rust:0.1.1_sd28_fix'
+    container 'quay.io/ssd28/experimental/pp-sketchlib-rust:0.1.2_sd28_fix'
 
     input:
-    tuple val(meta), path(ref_skm), path(ref_skd), path(query_skm), path(query_skd)
+    tuple val(meta), path(subset), path(query_skm), path(query_skd)
 
     output:
     tuple val(meta), path("${meta.ID}_ani_data.tsv"), emit: query_ani
@@ -58,18 +58,18 @@ process SKETCH_ANI_DIST {
     script:
     query_db = "${meta.ID}_sketch"
     """
-    sketchlib dist -v -k 17 --ani ${ref_skm} ${query_db} > ${meta.ID}_ani_data.tsv
+    sketchlib dist -v -k 17 --subset ${subset} --ani ${params.sketchlib_db} ${query_db} > ${meta.ID}_ani_data.tsv
     """
 }
 
 process SKETCH_ALL_DIST {
     tag "${meta.ID}"
-    label "cpu_4"
+    label "cpu_2"
     label "mem_500M"
     label "time_30m"
 
     //will reach out to get a real fix rather than my attempt at fixing the index problem
-    container 'quay.io/ssd28/experimental/pp-sketchlib-rust:0.1.1_sd28_fix'
+    container 'quay.io/ssd28/experimental/pp-sketchlib-rust:0.1.2_sd28_fix'
 
     input:
     tuple val(meta), path(ref_skm), path(ref_skd), path(query_skm), path(query_skd)
@@ -94,7 +94,7 @@ process SKETCH_TREE {
     label "time_1"
 
     //this is all testing so using experimental repo
-    container 'quay.io/ssd28/experimental/rapidnj:2.3.2'
+    container 'quay.io/ssd28/experimental/rapidnj:2.3.2-c1'
 
     publishDir "${params.outdir}/tree/${meta.ID}", mode: 'copy', overwrite: true
 

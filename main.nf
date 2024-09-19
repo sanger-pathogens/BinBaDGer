@@ -70,26 +70,26 @@ workflow {
     | POSTPROCESS_COBS
     | set { cobs_matches }
 
-    cobs_matches.combine(species_assembly_ch)
-    | EXTRACT_ASSEMBLYS_FROM_TAR
-    | transpose
-    | groupTuple
-    | SKETCH_SUBSET
-    | set { subset_sketch }
-    
-    
     SKETCH_ASSEMBLY(MANIFEST_PARSE.out.assemblies)  
     | set { query_sketch }
 
-    subset_sketch.join(query_sketch)
-    | SKETCH_ALL_DIST
-    | set { all_dists }
-       
-    subset_sketch.join(query_sketch)
+    cobs_matches.join(query_sketch)
     | SKETCH_ANI_DIST
     | PLOT_ANI
 
-    if (params.sketch_total_ani) {  
+    if (params.sketch_total_ani) {
+        
+        cobs_matches.combine(species_assembly_ch)
+        | EXTRACT_ASSEMBLYS_FROM_TAR
+        | transpose
+        | groupTuple
+        | SKETCH_SUBSET
+        | set { subset_sketch }
+
+        subset_sketch.join(query_sketch)
+        | SKETCH_ALL_DIST
+        | set { all_dists }
+
         if (params.generate_tree) {             
             SKETCH_TREE(all_dists)
             | PLOT_TREE
