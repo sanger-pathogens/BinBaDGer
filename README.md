@@ -10,7 +10,7 @@ To use these indices you will need to install the sketchlib software, which is
 available from https://github.com/bacpop/sketchlib.rust. You must have the
 [rust toolchain](https://www.rust-lang.org/tools/install) installed, clone the
 repository, then run `cargo install --path .`. Use `sketchlib -h` to see the
-help or e.g. sketchlib dist -h for explanation of subcommands.
+help or e.g. `sketchlib dist -h` for explanation of subcommands.
 
 The distributed index is sketch size 1024 with k=17.
 You can create different ranges using the sketch subcommand.
@@ -22,12 +22,11 @@ sketchlib dist -v -k 17 --subset Haemophilus_influenzae.txt --ani atb_sketchlib_
 Where the --subset file contains the list of samples you want to include.
 Removing --ani will calculate Jaccard distances.
 
-To query new samples against the index, first sketch it:
+To query a set of assemblies against the index, first sketch the query sequences:
 sketchlib sketch -v -o query -k 17 -f queries.tsv -s 1000
 (where queries.tsv contains query samples with name and file location, tab separated)
--s 1000 incicates the sketch size -- 1000 is default but we re-affirm this
 
-Then query it
+Then query the index:
 ```
 sketchlib dist -v -k 17 atb_sketchlib_v020 query
 ```
