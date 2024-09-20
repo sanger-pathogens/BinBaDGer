@@ -26,7 +26,7 @@ To query new samples against the index, first sketch it:
 sketchlib sketch -v -o query -k 17 -f queries.tsv -s 1000
 (where queries.tsv contains query samples with name and file location, tab separated)
 
-Then query it
+Then query the index:
 ```
 sketchlib dist -v -k 17 atb_sketchlib_v020 query
 ```
