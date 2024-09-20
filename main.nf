@@ -29,15 +29,12 @@ def printHelp() {
 // MODULES
 //
 
-include { COBS_SEARCH; POSTPROCESS_COBS                                                              } from './modules/cobs.nf'
-include { LEXICMAP_SEARCH                                                                            } from './modules/lexicmap.nf'
-include { SKETCH_ASSEMBLY; SKETCH_ANI_DIST; GENERATE_TOTAL_DIST_MATRIX; SKETCH_SUBSET_TOTAL_ANI_DIST } from './modules/sketchlib.nf'
-include { BIN_ANI_DISTANCES                                                                          } from './modules/binning.nf'
-include { EXTRACT_ASSEMBLYS_FROM_TAR                                                                 } from './modules/extract_assembly.nf'
-include { PLOT_ANI; SUBSELECT_GRAPH                                                                  } from './modules/plotting.nf'
-
-//from assorted-sub-workflows
-include { DOWNLOAD_METADATA                                                                          } from './assorted-sub-workflows/combined_input/modules/ena_downloader.nf'
+include { COBS_SEARCH; POSTPROCESS_COBS                               } from './modules/cobs.nf'
+include { DOWNLOAD_METADATA } from './assorted-sub-workflows/combined_input/modules/ena_downloader.nf'
+include { SKETCH_ASSEMBLY; SKETCH_ANI_DIST; SKETCH_SUBSET; SKETCH_ALL_DIST; SKETCH_TREE; GENERATE_DIST_MATRIX  } from './modules/sketchlib.nf'
+include { EXTRACT_ASSEMBLYS_FROM_TAR } from './modules/extract_assembly.nf'
+include { PLOT_ANI; PLOT_TREE; SUBSELECT_GRAPH                        } from './modules/plotting.nf'
+include { TRIM_TREE                                                   } from './modules/treemmer.nf'
 
 //
 // SUBWORKFLOWS
