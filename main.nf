@@ -30,6 +30,7 @@ def printHelp() {
 //
 
 include { COBS_SEARCH; POSTPROCESS_COBS                               } from './modules/cobs.nf'
+include { DOWNLOAD_METADATA } from './assorted-sub-workflows/combined_input/modules/ena_downloader.nf'
 include { SKETCH_ASSEMBLY; SKETCH_ANI_DIST; SKETCH_SUBSET; SKETCH_ALL_DIST; SKETCH_TREE; GENERATE_DIST_MATRIX  } from './modules/sketchlib.nf'
 include { EXTRACT_ASSEMBLYS_FROM_TAR } from './modules/extract_assembly.nf'
 include { PLOT_ANI; PLOT_TREE; SUBSELECT_GRAPH                        } from './modules/plotting.nf'
@@ -69,6 +70,9 @@ workflow {
     | groupTuple
     | POSTPROCESS_COBS
     | set { cobs_matches }
+
+    cobs_matches
+    | DOWNLOAD_METADATA
 
     SKETCH_ASSEMBLY(MANIFEST_PARSE.out.assemblies)  
     | set { query_sketch }
