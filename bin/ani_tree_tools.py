@@ -110,6 +110,7 @@ if __name__ == "__main__":
     parser.add_argument('--meta_ID', type=str, required=True, help='ID of dataset')
     parser.add_argument('--build_tree', action='store_true', help='Option to build tree')
     parser.add_argument('--phylip_path', type=str, help='Optional: Pre-generated PHYLIP file path')
+    parser.add_argument('--core_accession', action='store_true', help='parse input TSV as core + accession rather than single ANI scores')
     args = parser.parse_args()
 
     if args.phylip_path:
@@ -117,11 +118,15 @@ if __name__ == "__main__":
         sys.stderr.write(f"Using provided PHYLIP file: {phylip_path}\n")
     else:
         # Read the TSV and process data
-        ref_list, core_dist_mat, acc_dist_mat = read_tsv_to_core_accession(args.dist_tsv_path)
+        if args.core_accession:
+            ref_list, dist_mat, acc_dist_mat = read_tsv_to_core_accession(args.dist_tsv_path)        
+        else:
+            ref_list, dist_mat = read_tsv_to_structures(args.dist_tsv_path)
         #matrix = update_distance_matrices(dist_mat)
 
         # Generate the PHYLIP matrix
-        phylip_path = generate_phylip_matrix(ref_list, core_dist_mat, args.meta_ID)
+        phylip_path = generate_phylip_matrix(ref_list, dist_mat, args.meta_ID)
+
 
     # Conditionally build the tree if --build_tree is specified
     if args.build_tree:

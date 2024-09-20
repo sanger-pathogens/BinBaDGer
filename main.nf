@@ -29,17 +29,17 @@ def printHelp() {
 // MODULES
 //
 
-include { COBS_SEARCH; POSTPROCESS_COBS                               } from './modules/cobs.nf'
-include { SKETCH_ASSEMBLY; SKETCH_ANI_DIST; SKETCH_SUBSET; SKETCH_ALL_DIST; SKETCH_TREE; GENERATE_DIST_MATRIX  } from './modules/sketchlib.nf'
-include { EXTRACT_ASSEMBLYS_FROM_TAR } from './modules/extract_assembly.nf'
-include { PLOT_ANI; PLOT_TREE; SUBSELECT_GRAPH                        } from './modules/plotting.nf'
-include { TRIM_TREE                                                   } from './modules/treemmer.nf'
+include { COBS_SEARCH; POSTPROCESS_COBS                          } from './modules/cobs.nf'
+include { SKETCH_ASSEMBLY; SKETCH_ANI_DIST; GENERATE_DIST_MATRIX } from './modules/sketchlib.nf'
+include { EXTRACT_ASSEMBLYS_FROM_TAR                             } from './modules/extract_assembly.nf'
+include { PLOT_ANI; SUBSELECT_GRAPH                              } from './modules/plotting.nf'
 
 //
 // SUBWORKFLOWS
 //
 
-include { MANIFEST_PARSE   } from './subworkflows/manifest_parse.nf'
+include { MANIFEST_PARSE } from './subworkflows/manifest_parse.nf'
+include { BUILD_TREE     } from './subworkflows/build_tree.nf'
 
 /*
 ========================================================================================
@@ -57,10 +57,6 @@ workflow {
     channel.fromPath( "${params.cobs_base}/${params.species}*.xz" )
     | set {species_cobs_ch}
 
-    channel.fromPath("${params.assembly_base}/${params.species}*.xz")
-    | set { species_assembly_ch }
-
-
     manifest = file(params.manifest)
 
     MANIFEST_PARSE(manifest)
@@ -77,31 +73,23 @@ workflow {
     | SKETCH_ANI_DIST
     | PLOT_ANI
 
-    if (params.sketch_total_ani) {
-        
-        cobs_matches.combine(species_assembly_ch)
-        | EXTRACT_ASSEMBLYS_FROM_TAR
-        | transpose
-        | groupTuple
-        | SKETCH_SUBSET
-        | set { subset_sketch }
+    
+    
+    
+    
+    /*
+    optional extras
+    */
 
-        subset_sketch.join(query_sketch)
-        | SKETCH_ALL_DIST
-        | set { all_dists }
-
-        if (params.generate_tree) {             
-            SKETCH_TREE(all_dists)
-            | PLOT_TREE
-
-            if (params.trim_tree) { 
-                TRIM_TREE(SKETCH_TREE.out.tree)
-            }
-        }
-
-        if (params.cluster_subselection) {
-            GENERATE_DIST_MATRIX(all_dists)
-            | SUBSELECT_GRAPH
-        } 
+    //using clustering to subselect
+    if (params.cluster_subselection) {
+        GENERATE_DIST_MATRIX(SKETCH_ANI_DIST.out.query_ani)
+        | SUBSELECT_GRAPH
+    } 
+    
+    //build a core genome tree for all samples (requires extraction)
+    if (params.generate_tree) {
+        BUILD_TREE(cobs_matches, query_sketch)
     }
 }
+

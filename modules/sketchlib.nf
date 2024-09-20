@@ -110,7 +110,7 @@ process SKETCH_TREE {
 
     script:
     """
-    ani_tree_tools.py --dist_tsv_path ${total_tsv} --meta_ID ${meta.ID} --build_tree
+    ani_tree_tools.py --dist_tsv_path ${total_tsv} --meta_ID ${meta.ID} --core_accession --build_tree
     """
 }
 

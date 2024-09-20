@@ -25,6 +25,7 @@ Removing --ani will calculate Jaccard distances.
 To query new samples against the index, first sketch it:
 sketchlib sketch -v -o query -k 17 -f queries.tsv -s 1000
 (where queries.tsv contains query samples with name and file location, tab separated)
+-s 1000 incicates the sketch size -- 1000 is default but we re-affirm this
 
 Then query it
 ```
