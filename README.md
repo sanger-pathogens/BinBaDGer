@@ -22,7 +22,7 @@ sketchlib dist -v -k 17 --subset Haemophilus_influenzae.txt --ani atb_sketchlib_
 Where the --subset file contains the list of samples you want to include.
 Removing --ani will calculate Jaccard distances.
 
-To query new samples against the index, first sketch it:
+To query a set of assemblies against the index, first sketch the query sequences:
 sketchlib sketch -v -o query -k 17 -f queries.tsv -s 1000
 (where queries.tsv contains query samples with name and file location, tab separated)
 
