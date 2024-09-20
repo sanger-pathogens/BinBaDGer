@@ -10,7 +10,7 @@ To use these indices you will need to install the sketchlib software, which is
 available from https://github.com/bacpop/sketchlib.rust. You must have the
 [rust toolchain](https://www.rust-lang.org/tools/install) installed, clone the
 repository, then run `cargo install --path .`. Use `sketchlib -h` to see the
-help or e.g. sketchlib dist -h for explanation of subcommands.
+help or e.g. `sketchlib dist -h` for explanation of subcommands.
 
 The distributed index is sketch size 1024 with k=17.
 You can create different ranges using the sketch subcommand.
