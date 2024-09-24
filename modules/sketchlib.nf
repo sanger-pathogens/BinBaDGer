@@ -66,7 +66,28 @@ process SKETCH_ANI_DIST {
     """
 }
 
-process SKETCH_ALL_DIST {
+process SKETCH_SUBSET_TOTAL_ANI_DIST {
+    tag "${meta.ID}"
+    label "cpu_2"
+    label "mem_500M"
+    label "time_30m"
+
+    container 'quay.io/ssd28/experimental/pp-sketchlib-rust:0.1.2_sd28_fix'
+
+    input:
+    tuple val(meta), path(subset)
+
+    output:
+    tuple val(meta), path("${meta.ID}_betweenness_ani.tsv"), emit: subset_ani
+
+    script:
+    query_db = "${meta.ID}_sketch"
+    """
+    sketchlib dist -v -k 17 --subset ${subset} --ani ${params.sketchlib_db} > ${meta.ID}_betweenness_ani.tsv
+    """
+}
+
+process SKETCH_CORE_ACC_DIST {
     tag "${meta.ID}"
     label "cpu_2"
     label "mem_500M"
@@ -84,10 +105,8 @@ process SKETCH_ALL_DIST {
     script:
     query_db = "${meta.ID}_sketch"
     """
-    sketchlib dist -v ${ref_skm} ${query_db} > ${meta.ID}_query_core_data.tsv
-    sketchlib dist -v ${ref_skm} > ${meta.ID}_ref_core_data.tsv
-    
-    cat ${meta.ID}_ref_core_data.tsv ${meta.ID}_query_core_data.tsv > ${meta.ID}_total_core_data.tsv 
+    sketchlib dist -v ${ref_skm} ${query_db} > ${meta.ID}_total_core_data.tsv
+    sketchlib dist -v ${ref_skm} >> ${meta.ID}_total_core_data.tsv
     """
 }
 
@@ -114,25 +133,25 @@ process SKETCH_TREE {
     """
 }
 
-process GENERATE_DIST_MATRIX {
+process GENERATE_TOTAL_DIST_MATRIX {
     tag "${meta.ID}"
     label "cpu_4"
     label "mem_8"
     label "time_1"
 
-    //for ppsketchlib
     container 'quay.io/ssd28/experimental/rapidnj:2.3.2-c1'
 
     publishDir "${params.outdir}/tree/${meta.ID}", mode: 'copy', overwrite: true
 
     input:
-    tuple val(meta), path(total_tsv)
+    tuple val(meta), path(query_to_all_tsv), path(betweenness_tsv)
 
     output:
     tuple val(meta), path("*.phylip"), emit: matrix
 
     script:
     """
-    ani_tree_tools.py --dist_tsv_path ${total_tsv} --meta_ID ${meta.ID}
+    cat ${betweenness_tsv} ${query_to_all_tsv} > ${meta.ID}_total_ani_data.tsv
+    ani_tree_tools.py --dist_tsv_path ${meta.ID}_total_ani_data.tsv --meta_ID ${meta.ID}
     """
 }

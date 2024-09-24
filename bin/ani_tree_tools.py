@@ -9,29 +9,35 @@ import pp_sketchlib
 import argparse
 from tree_builder import generate_phylogeny
 
+import numpy as np
+
 def read_tsv_to_structures(reference_tsv):
     # Initialize the structures
     ref_list = []
-    dist_mat = []
+    dist_dict = {}
 
-    # Read and process the reference TSV
     with open(reference_tsv, 'r') as ref_file:
         for line in ref_file:
             # Split the line by tabs
-            sample, reference, core_dist, acc_dist = line.strip().split('\t')
-            # Add the unique samples to ref_list
+            sample, reference, ani = line.strip().split('\t')
             if sample not in ref_list:
                 ref_list.append(sample)
             if reference not in ref_list:
                 ref_list.append(reference)
-            # Convert ANI to distances and add to dist_mat
+            # Convert ANI to distance
+            dist = 1 - float(ani)
+            dist_dict[(sample, reference)] = dist
+            dist_dict[(reference, sample)] = dist
 
-            dist_mat.append([float(core_dist), float(core_dist)])
-            
+    # Initialize a square distance matrix
+    dist_mat = np.zeros((len(ref_list), len(ref_list)), dtype=np.float32)
 
-    # Convert dist_mat to a numpy array
-    dist_mat = np.array(dist_mat, dtype=np.float32)
-
+    for i, sample in enumerate(ref_list):
+        for j, reference in enumerate(ref_list):
+            if i == j:
+                dist_mat[i, j] = 0.0  # Distance to self is 0
+            else:
+                dist_mat[i, j] = dist_dict.get((sample, reference), 1.0)  # Default to max distance if no data
 
     return ref_list, dist_mat
 
@@ -70,27 +76,6 @@ def read_tsv_to_core_accession(reference_tsv):
 
     return ref_list, core_dist_mat, acc_dist_mat
 
-
-def update_distance_matrices(dist_mat, threads = 1):
-    """Convert distances from long form (1 matrix with n_comparisons rows and 2 columns)
-    to a square form (2 NxN matrices)
-    Args:
-        ref_list (list)
-            List of references
-        dist_mat (numpy.array)
-            Two column long form list of core and accessory distances
-            for pairwise comparisons between reference db sequences
-        threads (int)
-            Number of threads to use
-    Returns:
-        seqLabels (list)
-            Combined list of reference and query sequences
-        matrix (numpy.array)
-            NxN array of core distances for N sequences
-    """
-    matrix = pp_sketchlib.longToSquare(dist_mat[:, [0]], threads)
-    return matrix
-
 def generate_phylip_matrix(ref_list, matrix, meta_ID):
     # generate phylip matrix
     phylip_name = f"{meta_ID}_distances.phylip"
@@ -122,7 +107,6 @@ if __name__ == "__main__":
             ref_list, dist_mat, acc_dist_mat = read_tsv_to_core_accession(args.dist_tsv_path)        
         else:
             ref_list, dist_mat = read_tsv_to_structures(args.dist_tsv_path)
-        #matrix = update_distance_matrices(dist_mat)
 
         # Generate the PHYLIP matrix
         phylip_path = generate_phylip_matrix(ref_list, dist_mat, args.meta_ID)

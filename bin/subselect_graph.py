@@ -296,7 +296,7 @@ def main():
     context = {
     'matrix': matrix,
     'accessions': accessions,
-    'minimum_edge': 0.0005,
+    'minimum_edge': 0.005,
     }
 
 

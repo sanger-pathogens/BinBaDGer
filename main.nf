@@ -29,10 +29,11 @@ def printHelp() {
 // MODULES
 //
 
-include { COBS_SEARCH; POSTPROCESS_COBS                          } from './modules/cobs.nf'
-include { SKETCH_ASSEMBLY; SKETCH_ANI_DIST; GENERATE_DIST_MATRIX } from './modules/sketchlib.nf'
-include { EXTRACT_ASSEMBLYS_FROM_TAR                             } from './modules/extract_assembly.nf'
-include { PLOT_ANI; SUBSELECT_GRAPH                              } from './modules/plotting.nf'
+include { COBS_SEARCH; POSTPROCESS_COBS                                                              } from './modules/cobs.nf'
+include { SKETCH_ASSEMBLY; SKETCH_ANI_DIST; GENERATE_TOTAL_DIST_MATRIX; SKETCH_SUBSET_TOTAL_ANI_DIST } from './modules/sketchlib.nf'
+include { BIN_ANI_DISTANCES                                                                          } from './modules/binning.nf'
+include { EXTRACT_ASSEMBLYS_FROM_TAR                                                                 } from './modules/extract_assembly.nf'
+include { PLOT_ANI; SUBSELECT_GRAPH                                                                  } from './modules/plotting.nf'
 
 //
 // SUBWORKFLOWS
@@ -73,9 +74,7 @@ workflow {
     | SKETCH_ANI_DIST
     | PLOT_ANI
 
-    
-    
-    
+    BIN_ANI_DISTANCES(SKETCH_ANI_DIST.out.query_ani)
     
     /*
     optional extras
@@ -83,7 +82,13 @@ workflow {
 
     //using clustering to subselect
     if (params.cluster_subselection) {
-        GENERATE_DIST_MATRIX(SKETCH_ANI_DIST.out.query_ani)
+
+        //for this method we need all vs all ANI
+        SKETCH_SUBSET_TOTAL_ANI_DIST(cobs_matches)
+        | set { subset_ani }
+
+        SKETCH_ANI_DIST.out.query_ani.join(subset_ani)
+        | GENERATE_TOTAL_DIST_MATRIX
         | SUBSELECT_GRAPH
     } 
     
