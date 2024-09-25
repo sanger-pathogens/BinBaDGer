@@ -4,13 +4,13 @@ import pandas as pd
 import argparse
 
 def bin_similarities(df, bins, bin_labels):
-    """Bins the ANI values in the DataFrame."""
-    df['Bin'] = pd.cut(df['ANI'], bins=bins, labels=bin_labels)
+    """bins the ani values in the DataFrame."""
+    df['bin'] = pd.cut(df['ani'], bins=bins, labels=bin_labels)
     return df
 
 def read_tsv(file_path):
     """Reads a TSV file without headers and assigns default column names."""
-    df = pd.read_csv(file_path, sep='\t', header=None, names=['Query', 'Reference', 'ANI'])
+    df = pd.read_csv(file_path, sep='\t', header=None, names=['query', 'reference', 'ani'])
     return df
 
 def save_to_tsv(df, output_path):
@@ -19,7 +19,7 @@ def save_to_tsv(df, output_path):
 
 def sample_from_bins(df, n):
     """Randomly samples n Query entries from each bin."""
-    sampled_df = df.groupby('Bin').apply(lambda x: x.sample(n=min(len(x), n)))
+    sampled_df = df.groupby('bin').apply(lambda x: x.sample(n=min(len(x), n)))
     sampled_df.reset_index(drop=True, inplace=True)
     return sampled_df
 
@@ -36,7 +36,7 @@ def main(input_tsv, output_tsv, n):
     save_to_tsv(sampled_df , output_tsv)
 
 if __name__ == "__main__":
-    parser = argparse.ArgumentParser(description="Bin ANI_SIMILARITY values from TSV")
+    parser = argparse.ArgumentParser(description="bin ani_SIMILARITY values from TSV")
     parser.add_argument("input_tsv", help="Path to input TSV file")
     parser.add_argument("output_tsv", help="Path to save output TSV file")
     parser.add_argument("n", type=int, help="Number of QUERY entries to sample from each bin")

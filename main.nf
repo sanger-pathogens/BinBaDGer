@@ -30,6 +30,7 @@ def printHelp() {
 //
 
 include { COBS_SEARCH; POSTPROCESS_COBS                                                              } from './modules/cobs.nf'
+include { LEXICMAP_SEARCH                                                                            } from './modules/lexicmap.nf'
 include { SKETCH_ASSEMBLY; SKETCH_ANI_DIST; GENERATE_TOTAL_DIST_MATRIX; SKETCH_SUBSET_TOTAL_ANI_DIST } from './modules/sketchlib.nf'
 include { BIN_ANI_DISTANCES                                                                          } from './modules/binning.nf'
 include { EXTRACT_ASSEMBLYS_FROM_TAR                                                                 } from './modules/extract_assembly.nf'
@@ -67,6 +68,10 @@ workflow {
     | POSTPROCESS_COBS
     | set { cobs_matches }
 
+    if (params.lexicmap_search) {
+        LEXICMAP_SEARCH(MANIFEST_PARSE.out.assemblies)
+    }
+
     SKETCH_ASSEMBLY(MANIFEST_PARSE.out.assemblies)  
     | set { query_sketch }
 
@@ -75,6 +80,23 @@ workflow {
     | PLOT_ANI
 
     BIN_ANI_DISTANCES(SKETCH_ANI_DIST.out.query_ani)
+    | splitCsv(header: true, sep: "\t")
+    | map { meta, bin_info ->
+        def meta_new = [:]
+        meta_new.ID = meta.ID
+        meta_new.bin = bin_info.bin
+        sample = bin_info.query
+        
+        [ sample, meta_new ] //staging sample infront for groupTuple to output from ENADownloader
+    }
+    | set{ bin2channel }
+
+    //seperated as we can filter on metadata here!!!!
+
+    bin2channel
+    | groupTuple{ it[1] }
+    
+    
     
     /*
     optional extras
