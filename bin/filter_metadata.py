@@ -15,6 +15,7 @@ def parse_arguments():
     parser.add_argument('--filters', '-f', type=str, nargs='+', help="Filter conditions in the format, accepting any condition you could supply to `pd.DataFrame.query()`. Example: 'age > 30'.")
     parser.add_argument('--column_dtypes', '-d', type=str, nargs='+', help="Force the datatypes of columns. Specify the column and datatype using the syntax 'col:type'.")
     parser.add_argument('--pre-select', '-p', type=str, nargs='+', help="Specify columns to select in the input DataFrame. By default, all columns will be selected.")
+    parser.add_argument('--select', '-s', type=str, nargs='+', help="Specify columns to select in the output DataFrame. By default, all columns will be selected.")
     parser.add_argument('--output', '-o', type=str, help='Path to the output file to save the filtered DataFrame.')
     
     return parser.parse_args()
@@ -126,6 +127,10 @@ def main():
     # Filter using conditions
     if args.filters:
         df = apply_filters(df, args.filters)
+
+    # Select output columns
+    if args.select:
+        df = df[args.select]
 
     # Output the filtered DataFrame
     if args.output:
