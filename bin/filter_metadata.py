@@ -16,6 +16,7 @@ def parse_arguments():
     parser.add_argument('--column_dtypes', '-d', type=str, nargs='+', help="Force the datatypes of columns. Specify the column and datatype using the syntax 'col:type'.")
     parser.add_argument('--pre-select', '-p', type=str, nargs='+', help="Specify columns to select in the input DataFrame. By default, all columns will be selected.")
     parser.add_argument('--select', '-s', type=str, nargs='+', help="Specify columns to select in the output DataFrame. By default, all columns will be selected.")
+    parser.add_argument('--missing_values', '-m', type=str, nargs='+', help="Specify values that should be interpreted as missing values.")
     parser.add_argument('--output', '-o', type=str, help='Path to the output file to save the filtered DataFrame.')
     
     return parser.parse_args()
@@ -113,9 +114,9 @@ def main():
 
     # Read and clean the metadata TSV
     if not args.pre_select:
-        df = pd.read_csv(args.input, sep='\t')
+        df = pd.read_csv(args.input, sep='\t', na_values=args.missing_values, skip_blank_lines=True)
     else:
-        df = pd.read_csv(args.input, sep='\t', usecols=args.pre_select)
+        df = pd.read_csv(args.input, sep='\t', na_values=args.missing_values, skip_blank_lines=True, usecols=args.pre_select)
 
     print(df["collection_date"].dtype)
     print(pd.unique(df.iloc[:,42]))
