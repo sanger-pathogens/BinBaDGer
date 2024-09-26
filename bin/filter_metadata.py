@@ -12,40 +12,32 @@ def parse_arguments():
     parser = argparse.ArgumentParser(description='Filter rows of a TSV file based on conditions.')
     
     parser.add_argument('--input', '-i', type=Path, help='Path to the input TSV file.')
-    parser.add_argument('--cleaning_filters', '-f1', type=str, nargs='+', help="Filter conditions in the format 'column operator value'. Example: 'age > 30'.")
-    parser.add_argument('--logic_filters', '-f2', type=str, nargs='+', help="Filter conditions in the format 'column operator value'. Example: 'age > 30'.")
+    parser.add_argument('--filters', '-f', type=str, nargs='+', help="Filter conditions in the format, accepting any condition you could supply to `pd.DataFrame.query()`. Example: 'age > 30'.")
     parser.add_argument('--column_dtypes', '-d', type=str, nargs='+', help="Force the datatypes of columns. Specify the column and datatype using the syntax 'col:type'.")
     parser.add_argument('--output', '-o', type=str, help='Path to the output file to save the filtered DataFrame.')
     
     return parser.parse_args()
 
 
-def build_query_string(conditions):
-    """ Converts filter conditions into a valid query string for pandas """
+def build_query_string(conditions: list[str]) -> str:
+    """Converts filter conditions into a valid query string for pandas"""
     query_list = []
     for condition in conditions:
         query_list.append(condition)
     return ' and '.join(query_list)
 
 
-def clean_dataframe(df):
-    """ Remove leading and trailing whitespaces from column names and values in DataFrame """
-    df.columns = df.columns.str.strip()
-    df = df.map(lambda x: x.strip() if isinstance(x, str) else x)
-
-    return df
-
-def apply_filters(df, filters: list[str]):
+def apply_filters(df: pd.DataFrame, filters: list[str]) -> pd.DataFrame:
+    """Apply filters to select rows from the given DataFrame"""
     query_string = build_query_string(filters)
     try:
         filtered_df = df.query(query_string)
     except Exception as e:
-        raise e
-        # logging.error(f"Error in filtering: {e}")
-        # sys.exit(1)
+        logging.error(f"Error while filtering with query '{query_string}': {e}")
+        sys.exit(1)
     return filtered_df
 
-def parse_column_type_list(column_types: list):
+def parse_column_type_list(column_types: list) -> dict[str, str]:
     """
     Parses a list of "column:type" mappings and returns a dictionary with column names as keys and types as values.
     
@@ -61,7 +53,7 @@ def parse_column_type_list(column_types: list):
         parsed_column_types[col] = dtype
     return parsed_column_types
 
-def safe_convert_column(df, column, dtype):
+def safe_convert_column(df: pd.DataFrame, column: str, dtype: str) -> pd.DataFrame:
     """
     Attempts to convert a DataFrame column to the specified data type.
     Removes rows where any value prevents conversion.
@@ -92,7 +84,7 @@ def safe_convert_column(df, column, dtype):
 
     return df
 
-def apply_column_types(df, column_types: dict):
+def apply_column_types(df: pd.DataFrame, column_types: dict) -> pd.DataFrame:
     """
     Applies the given column-to-type mappings to the DataFrame.
     
@@ -108,51 +100,25 @@ def apply_column_types(df, column_types: dict):
             df = safe_convert_column(df, col, dtype)
         else:
             logging.error(f"Column '{col}' not found in DataFrame.")
+            sys.exit(1)
     
     return df
-    #     try:
-    #         # Convert the column to the specified dtype
-    #         df[col] = df[col].astype(dtype)
-    #         print(df[col].dtype)
-    #     except KeyError:
-    #         print(f"Column '{col}' not found in DataFrame.")
-    #     except ValueError as e:
-    #         raise e
-    #         # print(f"Error converting column '{col}' to {dtype}: {e}")
-    
-    # return df
 
 
 def main():
     args = parse_arguments()
     column_types = parse_column_type_list(args.column_dtypes)
     
-    
     # Read and clean the metadata TSV
     df = pd.read_csv(args.input, sep='\t')
-    # df = clean_dataframe(df)
-    # Ensure we still encode missing values correctly
-    # df.replace('', pd.NA, inplace=True)
     
-    # TODO With safe conversion of dtype we may no longer need to apply cleaning filters!
-    if args.cleaning_filters:
-        df = apply_filters(df, args.cleaning_filters)
-    
-    # Not necessary if we use a cleaning filter like "collection_data.notnull()"
-    # df = df.dropna(subset=["collection_date"])
-
-    # Found problematic values in collection date column:
-    # print(df.iloc[1053]["collection_date"]) # not applicable
-    # print(df.iloc[1116]["collection_date"])  # missing
-    # print(df.iloc[1126]["collection_date"])  # not provided
-
-
-    df = df.convert_dtypes()  # TODO Still necessary?
+    # Convert columns to appropriate types
+    # (filters out rows where values do not convert)
     df = apply_column_types(df, column_types)
     
-    if args.logic_filters:
-        df = apply_filters(df, args.logic_filters)
-
+    # Filter using conditions
+    if args.filters:
+        df = apply_filters(df, args.filters)
 
     # Output the filtered DataFrame
     if args.output:
