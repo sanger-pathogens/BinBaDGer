@@ -14,6 +14,7 @@ def parse_arguments():
     parser.add_argument('--input', '-i', type=Path, help='Path to the input TSV file.')
     parser.add_argument('--filters', '-f', type=str, nargs='+', help="Filter conditions in the format, accepting any condition you could supply to `pd.DataFrame.query()`. Example: 'age > 30'.")
     parser.add_argument('--column_dtypes', '-d', type=str, nargs='+', help="Force the datatypes of columns. Specify the column and datatype using the syntax 'col:type'.")
+    parser.add_argument('--pre-select', '-p', type=str, nargs='+', help="Specify columns to select in the input DataFrame. By default, all columns will be selected.")
     parser.add_argument('--output', '-o', type=str, help='Path to the output file to save the filtered DataFrame.')
     
     return parser.parse_args()
@@ -108,10 +109,16 @@ def apply_column_types(df: pd.DataFrame, column_types: dict) -> pd.DataFrame:
 def main():
     args = parse_arguments()
     column_types = parse_column_type_list(args.column_dtypes)
-    
+
     # Read and clean the metadata TSV
-    df = pd.read_csv(args.input, sep='\t')
-    
+    if not args.pre_select:
+        df = pd.read_csv(args.input, sep='\t')
+    else:
+        df = pd.read_csv(args.input, sep='\t', usecols=args.pre_select)
+
+    print(df["collection_date"].dtype)
+    print(pd.unique(df.iloc[:,42]))
+
     # Convert columns to appropriate types
     # (filters out rows where values do not convert)
     df = apply_column_types(df, column_types)
