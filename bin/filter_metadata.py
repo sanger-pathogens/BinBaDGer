@@ -146,9 +146,6 @@ def main():
     else:
         df = pd.read_csv(args.input, sep='\t', na_values=args.missing_values, skip_blank_lines=True, usecols=args.pre_select)
 
-    print(df["collection_date"].dtype)
-    print(pd.unique(df.iloc[:,42]))
-
     # Convert columns to appropriate types
     # (filters out rows where values do not convert)
     df = apply_column_types(df, column_types)
