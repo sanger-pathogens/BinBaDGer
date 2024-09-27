@@ -1,6 +1,7 @@
 #!/usr/bin/env python3
 
 import argparse
+import datetime as dt
 import pandas as pd
 import logging
 import sys
@@ -9,7 +10,12 @@ from pathlib import Path
 
 
 def parse_arguments():
-    parser = argparse.ArgumentParser(description='Filter rows of a TSV file based on conditions.')
+    timestamp = dt.datetime.now().strftime("%Y-%M-%d_%H-%M-%S")
+
+    parser = argparse.ArgumentParser(
+        description='Filter rows of a TSV file based on conditions.',
+        formatter_class=argparse.ArgumentDefaultsHelpFormatter,
+    )
     
     parser.add_argument('--input', '-i', type=Path, help='Path to the input TSV file.')
     parser.add_argument('--filters', '-f', type=str, nargs='+', help="Filter conditions in the format, accepting any condition you could supply to `pd.DataFrame.query()`. Example: 'age > 30'.")
@@ -18,6 +24,7 @@ def parse_arguments():
     parser.add_argument('--select', '-s', type=str, nargs='+', help="Specify columns to select in the output DataFrame. By default, all columns will be selected.")
     parser.add_argument('--missing_values', '-m', type=str, nargs='+', help="Specify values that should be interpreted as missing values.")
     parser.add_argument('--output', '-o', type=str, help='Path to the output file to save the filtered DataFrame.')
+    parser.add_argument('--logfile', '-l', type=str, help='Path to the log file.', default=f"filter_metadata-{timestamp}.log")
     
     return parser.parse_args()
 
@@ -107,9 +114,23 @@ def apply_column_types(df: pd.DataFrame, column_types: dict) -> pd.DataFrame:
     
     return df
 
+def set_up_logging(log_file) -> None:
+    logfile = Path(".") / log_file
+    fh = logging.FileHandler(logfile, mode="w")
+    fh.setLevel(logging.DEBUG)
+    sh = logging.StreamHandler()
+    sh.setLevel(logging.INFO)
+    logging.basicConfig(
+        level=logging.DEBUG,
+        format="%(asctime)s - %(levelname)s - %(message)s",
+        datefmt="%Y-%m-%d %H:%M:%S",
+        handlers=[fh, sh],
+    )
+
 
 def main():
     args = parse_arguments()
+    set_up_logging(args.logfile)
     column_types = parse_column_type_list(args.column_dtypes)
 
     # Read and clean the metadata TSV
