@@ -21,7 +21,6 @@ def parse_arguments():
     parser.add_argument('--input', '-i', type=Path, help='Path to the input TSV file.')
     parser.add_argument('--filters', '-f', type=str, nargs='+', help="Filter conditions in the format, accepting any condition you could supply to `pd.DataFrame.query()`. Example: 'age > 30'. Before using filters, please ensure that the columns to be filtered are of appropriate type (use --column_dtypes option to force).")
     parser.add_argument('--column_dtypes', '-d', type=str, nargs='+', help="Force the datatypes of columns. Specify the column and datatype using the syntax 'col:type'. While many types are accepted, 'int', 'float' and 'datetime' will remove rows with invalid values (which may or may not be desirable).")
-    parser.add_argument('--pre-select', '-p', type=str, nargs='+', help="Specify columns to select in the input DataFrame. By default, all columns will be selected.")
     parser.add_argument('--select', '-s', type=str, nargs='+', help="Specify columns to select in the output DataFrame. By default, all columns will be selected.")
     parser.add_argument('--missing_values', '-m', type=str, nargs='+', help="Specify values that should be interpreted as missing values.")
     parser.add_argument('--output', '-o', type=str, help='Path to the output file to save the filtered DataFrame.')
@@ -141,10 +140,7 @@ def main():
     column_types = parse_column_type_list(args.column_dtypes)
 
     # Read and clean the metadata TSV
-    if not args.pre_select:
-        df = pd.read_csv(args.input, sep='\t', na_values=args.missing_values, skip_blank_lines=True)
-    else:
-        df = pd.read_csv(args.input, sep='\t', na_values=args.missing_values, skip_blank_lines=True, usecols=args.pre_select)
+    df = pd.read_csv(args.input, sep='\t', na_values=args.missing_values, skip_blank_lines=True)
 
     # Convert columns to appropriate types
     # (filters out rows where values do not convert)
