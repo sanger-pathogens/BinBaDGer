@@ -6,6 +6,7 @@ import pandas as pd
 import logging
 import sys
 
+from pandas.api.types import infer_dtype
 from pathlib import Path
 
 
@@ -18,8 +19,8 @@ def parse_arguments():
     )
     
     parser.add_argument('--input', '-i', type=Path, help='Path to the input TSV file.')
-    parser.add_argument('--filters', '-f', type=str, nargs='+', help="Filter conditions in the format, accepting any condition you could supply to `pd.DataFrame.query()`. Example: 'age > 30'.")
-    parser.add_argument('--column_dtypes', '-d', type=str, nargs='+', help="Force the datatypes of columns. Specify the column and datatype using the syntax 'col:type'.")
+    parser.add_argument('--filters', '-f', type=str, nargs='+', help="Filter conditions in the format, accepting any condition you could supply to `pd.DataFrame.query()`. Example: 'age > 30'. Before using filters, please ensure that the columns to be filtered are of appropriate type (use --column_dtypes option to force).")
+    parser.add_argument('--column_dtypes', '-d', type=str, nargs='+', help="Force the datatypes of columns. Specify the column and datatype using the syntax 'col:type'. While many types are accepted, 'int', 'float' and 'datetime' will remove rows with invalid values (which may or may not be desirable).")
     parser.add_argument('--pre-select', '-p', type=str, nargs='+', help="Specify columns to select in the input DataFrame. By default, all columns will be selected.")
     parser.add_argument('--select', '-s', type=str, nargs='+', help="Specify columns to select in the output DataFrame. By default, all columns will be selected.")
     parser.add_argument('--missing_values', '-m', type=str, nargs='+', help="Specify values that should be interpreted as missing values.")
@@ -44,6 +45,8 @@ def apply_filters(df: pd.DataFrame, filters: list[str]) -> pd.DataFrame:
         filtered_df = df.query(query_string)
     except Exception as e:
         logging.error(f"Error while filtering with query '{query_string}': {e}")
+        logging.info(f"Are you sure the columns are of correct dtype?")
+        logging.info("Try forcing column dtype using the -d option.")
         sys.exit(1)
     return filtered_df
 
@@ -78,16 +81,20 @@ def safe_convert_column(df: pd.DataFrame, column: str, dtype: str) -> pd.DataFra
     """
     if dtype == 'int' or dtype == 'float':
         # Use pd.to_numeric with errors='coerce' for numeric conversion
-        df[column] = pd.to_numeric(df[column], errors='coerce')
+        df.loc[:, column] = pd.to_numeric(df[column], errors='coerce')
     elif dtype == 'datetime':
         # Use pd.to_datetime with errors='coerce' for datetime conversion
         df[column] = pd.to_datetime(df[column], errors='coerce')
     else:
         # For other types, try using astype with errors handling
         try:
-            df[column] = df[column].astype(dtype)
-        except ValueError as e:
-            logging.error(f"Error converting column '{column}' to type '{dtype}': {e}")
+            df[column] = df[column].dropna().astype(dtype)
+        except (ValueError, TypeError) as e:
+            logging.error(f"Could not convert column '{column}' to type '{dtype}'.")
+            logging.error(f"Conversion terminated unexpectedly with error: {e}.")
+            logging.info(f"Column '{column}' appears to have dtype '{infer_dtype(column)}'")
+            logging.info(f"Are you sure all values in {column} can be converted to type {dtype}?")
+            sys.exit(1)
 
     # Drop rows where conversion resulted in NaN (failed conversions)
     df = df.dropna(subset=[column])
