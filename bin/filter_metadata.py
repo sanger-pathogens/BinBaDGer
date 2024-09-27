@@ -17,15 +17,14 @@ def parse_arguments():
         description='Filter rows of a TSV file based on conditions.',
         formatter_class=argparse.ArgumentDefaultsHelpFormatter,
     )
-    
+
     parser.add_argument('--input', '-i', type=Path, help='Path to the input TSV file.')
-    parser.add_argument('--filters', '-f', type=str, nargs='+', help="Filter conditions in the format, accepting any condition you could supply to `pd.DataFrame.query()`. Example: 'age > 30'. Before using filters, please ensure that the columns to be filtered are of appropriate type (use --column_dtypes option to force).")
-    parser.add_argument('--column_dtypes', '-d', type=str, nargs='+', help="Force the datatypes of columns. Specify the column and datatype using the syntax 'col:type'. While many types are accepted, 'int', 'float' and 'datetime' will remove rows with invalid values (which may or may not be desirable).")
+    parser.add_argument('--filter_manifest', '-f', type=Path, help="Path to a TSV manifest specifying the columns in the input TSV to which filter and datatype conversion should be applied. The manifest should contain 3 columns: column, filter, datatype. The column should match a column in the input TSV. Entries in 'column' column should be unique. The filter should match a string that could be supplied to `pd.DataFrame.query()`, e.g. 'age > 30'. The datatype can be int, float, datetime, bool and str.")
     parser.add_argument('--select', '-s', type=str, nargs='+', help="Specify columns to select in the output DataFrame. By default, all columns will be selected.")
     parser.add_argument('--missing_values', '-m', type=str, nargs='+', help="Specify values that should be interpreted as missing values.")
     parser.add_argument('--output', '-o', type=str, help='Path to the output file to save the filtered DataFrame.')
     parser.add_argument('--logfile', '-l', type=str, help='Path to the log file.', default=f"filter_metadata-{timestamp}.log")
-    
+
     return parser.parse_args()
 
 
@@ -49,32 +48,70 @@ def apply_filters(df: pd.DataFrame, filters: list[str]) -> pd.DataFrame:
         sys.exit(1)
     return filtered_df
 
-def parse_column_type_list(column_types: list) -> dict[str, str]:
+def parse_filter_manifest(manifest: Path, sep:str = "\t") -> pd.DataFrame:
     """
-    Parses a list of "column:type" mappings and returns a dictionary with column names as keys and types as values.
-    
+    Parses a manifest file specifying column, filter and data type into a pandas DataFrame.
+
     Parameters:
-    column_type_list (list of str): A list of column-to-type mappings in the format "column:type".
-    
+    manifest (Path): Path to the manifest file
+
     Returns:
-    dict: A dictionary where keys are column names and values are target types.
+    pd.DataFrame: A three column dataframe specifying column, filter and data type
     """
-    parsed_column_types = {}
-    for column_type in column_types:
-        col, dtype = column_type.split(":")
-        parsed_column_types[col] = dtype
-    return parsed_column_types
+    if not manifest.is_file():
+        logging.error(f"The given manfiest {manifest} is not a file.")
+        sys.exit(1)
+
+    df = pd.read_csv(manifest, sep=sep, skip_blank_lines=True)
+
+    errors = 0
+
+    # Check invalid headings
+    headings = set(df.columns)
+    missing_headings, unrecognized_headings = validate_headings(headings)
+    if missing_headings:
+        logging.error(f"Missing required headings from manifest {manifest}: {missing_headings}")
+        errors += 1
+    if unrecognized_headings:
+        logging.error(f"Unrecognized headings from manifest {manifest}: {unrecognized_headings}")
+        errors += 1
+
+    # Check missing values
+    num_missing_values = df.isnull().sum().sum()
+    if num_missing_values != 0:
+        logging.error(f"{num_missing_values} missing values were detected in the manifest {manifest}. Please ensure the manifest contains no missing values.")
+        errors += 1
+
+    # Check uniqueness of column filter specifications
+    column_manifest_heading = "column"
+    columns_names = df[column_manifest_heading]
+    duplicate_column_names_mask = columns_names.duplicated(keep='first')
+    if sum(duplicate_column_names_mask) != 0:
+        logging.error(f"Found duplicate values in column {column_manifest_heading}:\n {df[duplicate_column_names_mask]}")
+        errors += 1
+
+    if errors:
+        logging.error(f"Found {errors} errors. Please check the manifest.")
+        sys.exit(1)
+
+    return df
+
+def validate_headings(headings: set):
+    valid_headings = {"column", "filter", "datatype"}
+    missing_headings = valid_headings.difference(headings)
+    unrecognized_headings = set(headings).difference(valid_headings)
+    return missing_headings, unrecognized_headings
 
 def safe_convert_column(df: pd.DataFrame, column: str, dtype: str) -> pd.DataFrame:
     """
     Attempts to convert a DataFrame column to the specified data type.
     Removes rows where any value prevents conversion.
-    
+
     Parameters:
     df (pd.DataFrame): The DataFrame containing the column to convert.
     column (str): The name of the column to convert.
     dtype (str): The target data type (e.g., 'int', 'float', 'datetime', etc.).
-    
+
     Returns:
     pd.DataFrame: The DataFrame with the column converted, and rows with invalid values removed.
     """
@@ -103,11 +140,11 @@ def safe_convert_column(df: pd.DataFrame, column: str, dtype: str) -> pd.DataFra
 def apply_column_types(df: pd.DataFrame, column_types: dict) -> pd.DataFrame:
     """
     Applies the given column-to-type mappings to the DataFrame.
-    
+
     Parameters:
     df (pd.DataFrame): The DataFrame to modify.
     column_types (dict): A dictionary where keys are column names and values are target types.
-    
+
     Returns:
     pd.DataFrame: The DataFrame with updated column types.
     """
@@ -117,7 +154,7 @@ def apply_column_types(df: pd.DataFrame, column_types: dict) -> pd.DataFrame:
         else:
             logging.error(f"Column '{col}' not found in DataFrame.")
             sys.exit(1)
-    
+
     return df
 
 def set_up_logging(log_file) -> None:
@@ -137,18 +174,24 @@ def set_up_logging(log_file) -> None:
 def main():
     args = parse_arguments()
     set_up_logging(args.logfile)
-    column_types = parse_column_type_list(args.column_dtypes)
+
+    parsed_manifest = parse_filter_manifest(args.filter_manifest)
 
     # Read and clean the metadata TSV
     df = pd.read_csv(args.input, sep='\t', na_values=args.missing_values, skip_blank_lines=True)
 
+    column_types = {}
+    filters = []
+    for column, filter_str, dtype in parsed_manifest.itertuples(index=False, name=None):
+        column_types[column] = dtype
+        filters.append(filter_str)
+
     # Convert columns to appropriate types
     # (filters out rows where values do not convert)
     df = apply_column_types(df, column_types)
-    
+
     # Filter using conditions
-    if args.filters:
-        df = apply_filters(df, args.filters)
+    df = apply_filters(df, filters)
 
     # Select output columns
     if args.select:
