@@ -179,7 +179,7 @@ def main():
     parsed_manifest = parse_filter_manifest(args.filter_manifest)
 
     # Read and clean the metadata TSV
-    df = pd.read_csv(args.input, sep='\t', na_values=args.missing_values, skip_blank_lines=True)
+    df = pd.read_csv(args.input, sep='\t', na_values=args.missing_values, skip_blank_lines=True, low_memory=False)
 
     column_types = {}
     filters = []
