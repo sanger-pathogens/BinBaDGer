@@ -36,7 +36,7 @@ def read_tsv_to_structures(reference_tsv):
             if i == j:
                 dist_mat[i, j] = 0.0  # Distance to self is 0
             else:
-                dist_mat[i, j] = dist_dict.get((sample, reference), 1.0)  # Default to max distance if no data
+                dist_mat[i, j] = dist_dict[(sample, reference)]
 
     return ref_list, dist_mat
 
