@@ -30,7 +30,8 @@ def printHelp() {
 //
 
 include { COBS_SEARCH; POSTPROCESS_COBS                               } from './modules/cobs.nf'
-include { DOWNLOAD_METADATA; FILTER_METADATA } from './assorted-sub-workflows/combined_input/modules/ena_downloader.nf'
+include { DOWNLOAD_METADATA } from './assorted-sub-workflows/combined_input/modules/ena_downloader.nf'
+include { FILTER_METADATA } from './assorted-sub-workflows/combined_input/modules/filter_metadata.nf'
 include { SKETCH_ASSEMBLY; SKETCH_ANI_DIST; SKETCH_SUBSET; SKETCH_ALL_DIST; SKETCH_TREE; GENERATE_DIST_MATRIX  } from './modules/sketchlib.nf'
 include { EXTRACT_ASSEMBLYS_FROM_TAR } from './modules/extract_assembly.nf'
 include { PLOT_ANI; PLOT_TREE; SUBSELECT_GRAPH                        } from './modules/plotting.nf'
@@ -67,6 +68,7 @@ workflow {
     | set { sketchlib_db_ch }
 
     manifest = file(params.manifest)
+    filter_manifest = file(params.filter_manifest, checkIfExists: true)
 
     //main logic
 
@@ -80,35 +82,19 @@ workflow {
     cobs_matches
     | DOWNLOAD_METADATA
 
-    filter = [
-        "read_count": [
-            "read_count > 2500000",
-            "int"
-        ],
-        "collection_date": [
-            "2012 < collection_date",
-            "datetime"
-        ]
-    ]
-
-    filter_sanger = [
-        "center_name": [
-            "center_name.str.contains('Wellcome Sanger Institute', na=False)",
-            "str"
-        ],
-    ]
     FILTER_METADATA(
         DOWNLOAD_METADATA.out.metadata_tsv,
-        filter,
-        [],  // select columns
-        false  // remove_header
+        filter_manifest,
+        ["sample_accession"],  // select columns
+        true  // remove_header
     )
+    | set { filtered_cobs_matches }
 
     SKETCH_ASSEMBLY(MANIFEST_PARSE.out.assemblies)  
     | set { query_sketch }
 
     SKETCH_ANI_DIST(cobs_matches.join(query_sketch), sketchlib_db_ch)
-    | PLOT_ANI
+     | PLOT_ANI
 
     BIN_ANI_DISTANCES(SKETCH_ANI_DIST.out.query_ani)
     | splitCsv(header: true, sep: "\t")
