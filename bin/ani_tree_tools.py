@@ -27,7 +27,6 @@ def read_tsv_to_structures(reference_tsv):
             # Convert ANI to distance
             dist = 1 - float(ani)
             dist_dict[(sample, reference)] = dist
-            dist_dict[(reference, sample)] = dist
 
     # Initialize a square distance matrix
     dist_mat = np.zeros((len(ref_list), len(ref_list)), dtype=np.float32)
