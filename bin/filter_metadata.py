@@ -46,6 +46,12 @@ def parse_arguments():
         help="Remove the header from the output TSV.",
     )
     parser.add_argument(
+        "--error_on_invalid_type",
+        "-e",
+        action="store_true",
+        help="During type conversion, upon encountering a value in the column that cannot be converted to the given datatype, raise an error. Default behaviour is to remove the row that contains an invalid value.",
+    )
+    parser.add_argument(
         "--output",
         "-o",
         type=str,
@@ -147,7 +153,9 @@ def validate_headings(headings: set):
     return missing_headings, unrecognized_headings
 
 
-def safe_convert_column(df: pd.DataFrame, column: str, dtype: str) -> pd.DataFrame:
+def safe_convert_column(
+    df: pd.DataFrame, column: str, dtype: str, error_on_invalid_type: bool = False
+) -> pd.DataFrame:
     """
     Attempts to convert a DataFrame column to the specified data type.
     Removes rows where any value prevents conversion.
@@ -156,30 +164,30 @@ def safe_convert_column(df: pd.DataFrame, column: str, dtype: str) -> pd.DataFra
     df (pd.DataFrame): The DataFrame containing the column to convert.
     column (str): The name of the column to convert.
     dtype (str): The target data type (e.g., 'int', 'float', 'datetime', etc.).
+    error_on_invalid (bool): If True, error on invalid values that cannot be converted, instead of row removal.
 
     Returns:
-    pd.DataFrame: The DataFrame with the column converted, and rows with invalid values removed.
+    pd.DataFrame: The DataFrame with the column converted, with rows with invalid values removed (if necessary).
     """
-    if dtype == "int" or dtype == "float":
-        # Use pd.to_numeric with errors='coerce' for numeric conversion
-        df.loc[:, column] = pd.to_numeric(df[column], errors="coerce")
-    elif dtype == "datetime":
-        # Use pd.to_datetime with errors='coerce' for datetime conversion
-        df[column] = pd.to_datetime(df[column], errors="coerce")
-    else:
-        # For other types, try using astype with errors handling
-        try:
+    errors_arg = "raise" if error_on_invalid_type else "coerce"
+    try:
+        if dtype == "int" or dtype == "float":
+            # Use pd.to_numeric with errors='coerce' for numeric conversion
+            df.loc[:, column] = pd.to_numeric(df[column], errors=errors_arg)
+        elif dtype == "datetime":
+            # Use pd.to_datetime with errors='coerce' for datetime conversion
+            df[column] = pd.to_datetime(df[column], errors=errors_arg)
+        else:
+            # For other types, try using astype with errors handling
             df[column] = df[column].dropna().astype(dtype)
-        except (ValueError, TypeError) as e:
-            logging.error(f"Could not convert column '{column}' to type '{dtype}'.")
-            logging.error(f"Conversion terminated unexpectedly with error: {e}.")
-            logging.info(
-                f"Column '{column}' appears to have dtype '{infer_dtype(column)}'"
-            )
-            logging.info(
-                f"Are you sure all values in {column} can be converted to type {dtype}?"
-            )
-            sys.exit(1)
+    except (ValueError, TypeError) as e:
+        logging.error(f"Could not convert column '{column}' to type '{dtype}'.")
+        logging.error(f"Conversion terminated unexpectedly with error: {e}.")
+        logging.info(f"Column '{column}' appears to have dtype '{infer_dtype(column)}'")
+        logging.info(
+            f"Are you sure all values in {column} can be converted to type {dtype}?"
+        )
+        sys.exit(1)
 
     # Drop rows where conversion resulted in NaN (failed conversions)
     df = df.dropna(subset=[column])
@@ -187,7 +195,9 @@ def safe_convert_column(df: pd.DataFrame, column: str, dtype: str) -> pd.DataFra
     return df
 
 
-def apply_column_types(df: pd.DataFrame, column_types: dict) -> pd.DataFrame:
+def apply_column_types(
+    df: pd.DataFrame, column_types: dict, error_on_invalid_type: bool = False
+) -> pd.DataFrame:
     """
     Applies the given column-to-type mappings to the DataFrame.
 
@@ -200,7 +210,7 @@ def apply_column_types(df: pd.DataFrame, column_types: dict) -> pd.DataFrame:
     """
     for col, dtype in column_types.items():
         if col in df.columns:
-            df = safe_convert_column(df, col, dtype)
+            df = safe_convert_column(df, col, dtype, error_on_invalid_type)
         else:
             logging.error(f"Column '{col}' not found in DataFrame.")
             sys.exit(1)
@@ -245,7 +255,9 @@ def main():
 
     # Convert columns to appropriate types
     # (filters out rows where values do not convert)
-    df = apply_column_types(df, column_types)
+    df = apply_column_types(
+        df, column_types, error_on_invalid_type=args.error_on_invalid_type
+    )
 
     # Filter using conditions
     df = apply_filters(df, filters)
