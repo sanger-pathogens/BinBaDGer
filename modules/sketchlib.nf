@@ -81,7 +81,6 @@ process SKETCH_SUBSET_TOTAL_ANI_DIST {
     tuple val(meta), path("${meta.ID}_betweenness_ani.tsv"), emit: subset_ani
 
     script:
-    query_db = "${meta.ID}_sketch"
     """
     sketchlib dist -v -k 17 --subset ${subset} --ani ${params.sketchlib_db} > ${meta.ID}_betweenness_ani.tsv
     """
