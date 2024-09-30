@@ -226,7 +226,13 @@ def main():
     args = parse_arguments()
     set_up_logging(args.logfile)
 
+    # Parse input manifest into datatypes and filters
     parsed_manifest = parse_filter_manifest(args.filter_manifest)
+    column_types = {}
+    filters = []
+    for column, filter_str, dtype in parsed_manifest.itertuples(index=False, name=None):
+        column_types[column] = dtype
+        filters.append(filter_str)
 
     # Read and clean the metadata TSV
     df = pd.read_csv(
@@ -236,12 +242,6 @@ def main():
         skip_blank_lines=True,
         low_memory=False,
     )
-
-    column_types = {}
-    filters = []
-    for column, filter_str, dtype in parsed_manifest.itertuples(index=False, name=None):
-        column_types[column] = dtype
-        filters.append(filter_str)
 
     # Convert columns to appropriate types
     # (filters out rows where values do not convert)
