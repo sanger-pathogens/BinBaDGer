@@ -22,6 +22,7 @@ def parse_arguments():
     parser.add_argument('--filter_manifest', '-f', type=Path, help="Path to a TSV manifest specifying the columns in the input TSV to which filter and datatype conversion should be applied. The manifest should contain 3 columns: column, filter, datatype. The column should match a column in the input TSV. Entries in 'column' column should be unique. The filter should match a string that could be supplied to `pd.DataFrame.query()`, e.g. 'age > 30'. The datatype can be int, float, datetime, bool and str.")
     parser.add_argument('--select', '-s', type=str, nargs='+', help="Specify columns to select in the output DataFrame. By default, all columns will be selected.")
     parser.add_argument('--missing_values', '-m', type=str, nargs='+', help="Specify values that should be interpreted as missing values.")
+    parser.add_argument('--remove_header', '-r', action="store_true", help="Remove the header from the output TSV.")
     parser.add_argument('--output', '-o', type=str, help='Path to the output file to save the filtered DataFrame.')
     parser.add_argument('--logfile', '-l', type=str, help='Path to the log file.', default=f"filter_metadata-{timestamp}.log")
 
@@ -199,7 +200,7 @@ def main():
 
     # Output the filtered DataFrame
     if args.output:
-        df.to_csv(args.output, sep='\t', index=False)
+        df.to_csv(args.output, sep='\t', index=False, header=(not args.remove_header))
         logging.info(f"Filtered data saved to {args.output}")
     else:
         # Print to stdout
