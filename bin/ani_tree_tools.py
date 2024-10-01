@@ -32,9 +32,10 @@ def read_tsv_to_structures(reference_tsv):
     dist_mat = np.zeros((len(ref_list), len(ref_list)), dtype=np.float32)
 
     for i, sample in enumerate(ref_list):
-        for j, reference in enumerate(ref_list):
+        for j in range(i, len(ref_list)):
+            reference = ref_list[j]
             if i == j:
-                dist_mat[i, j] = 0.0  # Distance to self is 0
+                dist = 0.0  # Distance to self is 0
             else:
                 dist_mat[i, j] = dist_dict[(sample, reference)]
 
