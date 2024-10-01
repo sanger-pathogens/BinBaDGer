@@ -289,6 +289,12 @@ def main():
         help="method or methods to use for clustering"
     ),
 
+    parser.add_argument('--minimum_edge', 
+        type=float,
+        default=0.005,
+        help="minimum_edge for bringing forward to network"
+    ),
+
     args = parser.parse_args()
 
     _, accessions, matrix = read_phylip_distance(args.phylip)
@@ -296,7 +302,7 @@ def main():
     context = {
     'matrix': matrix,
     'accessions': accessions,
-    'minimum_edge': 0.005,
+    'minimum_edge': args.minimum_edge,
     }
 
 
