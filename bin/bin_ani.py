@@ -13,15 +13,15 @@ def read_tsv(file_path):
     df = pd.read_csv(file_path, sep='\t', header=None, names=['query', 'reference', 'ani'])
     return df
 
-def save_to_tsv(df, output_path):
-    """Saves the DataFrame to a TSV file."""
-    df.to_csv(output_path, sep='\t', index=False)
-
 def sample_from_bins(df, n):
     """Randomly samples n Query entries from each bin."""
     sampled_df = df.groupby('ref_ani_bin').apply(lambda x: x.sample(n=min(len(x), n)))
     sampled_df.reset_index(drop=True, inplace=True)
     return sampled_df
+
+def save_to_tsv(df, output_path):
+    """Saves the DataFrame to a TSV file."""
+    df.to_csv(output_path, sep='\t', index=False)
 
 def main(input_tsv, output_tsv, n):
     bins = [0.98, 0.99, 0.995, 0.998, 1]
@@ -31,7 +31,7 @@ def main(input_tsv, output_tsv, n):
     
     df = bin_similarities(df, bins, bin_labels)
 
-    if n > 0:
+    if n:
         df = sample_from_bins(df, n)
     
     save_to_tsv(df , output_tsv)
@@ -40,7 +40,7 @@ if __name__ == "__main__":
     parser = argparse.ArgumentParser(description="bin ani_similarity values from TSV")
     parser.add_argument("--input_tsv", required=True, help="Path to input TSV file of three columns ref query   ani")
     parser.add_argument("--output_tsv", required=True, help="Path to save output binned tsv")
-    parser.add_argument("-n", type=int, default=0, help="Number of QUERY entries to sample from each bin")
+    parser.add_argument("-n", type=int, help="Number of QUERY entries to sample from each bin")
     
     args = parser.parse_args()
     

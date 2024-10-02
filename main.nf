@@ -123,7 +123,7 @@ workflow {
         | SUBSELECT_GRAPH
     } 
     
-    //build a core genome tree for all samples (requires extraction)
+    //build a core genome tree for all samples (requires extraction of assemblies)
     if (params.generate_tree) {
         BUILD_TREE(cobs_matches, query_sketch)
     }
