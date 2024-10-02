@@ -55,6 +55,7 @@ process SKETCH_ANI_DIST {
     // or, in the case of a multisketch, pairwise across all assemblies or reads within that sketch.
     // https://ftp.ebi.ac.uk/pub/databases/AllTheBacteria/Releases/0.2/indexes/README.md
     tuple val(meta), path(subset), path(query_skm), path(query_skd)
+    val(sketchlib_db)
 
     output:
     tuple val(meta), path("${meta.ID}_ani_data.tsv"), emit: query_ani
@@ -62,7 +63,7 @@ process SKETCH_ANI_DIST {
     script:
     query_db = "${meta.ID}_sketch"
     """
-    sketchlib dist -v -k 17 --subset ${subset} --ani ${params.sketchlib_db} ${query_db} > ${meta.ID}_ani_data.tsv
+    sketchlib dist -v -k 17 --subset ${subset} --ani ${sketchlib_db} ${query_db} > ${meta.ID}_ani_data.tsv
     """
 }
 
@@ -76,13 +77,14 @@ process SKETCH_SUBSET_TOTAL_ANI_DIST {
 
     input:
     tuple val(meta), path(subset)
+    val(sketchlib_db)
 
     output:
     tuple val(meta), path("${meta.ID}_betweenness_ani.tsv"), emit: subset_ani
 
     script:
     """
-    sketchlib dist -v -k 17 --subset ${subset} --ani ${params.sketchlib_db} > ${meta.ID}_betweenness_ani.tsv
+    sketchlib dist -v -k 17 --subset ${subset} --ani ${sketchlib_db} > ${meta.ID}_betweenness_ani.tsv
     """
 }
 

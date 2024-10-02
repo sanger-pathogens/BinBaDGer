@@ -59,6 +59,9 @@ workflow {
     channel.fromPath( "${params.cobs_base}/${params.species}*.xz" )
     | set {species_cobs_ch}
 
+    channel.fromPath( params.sketchlib_db )
+    | set { sketchlib_db_ch }
+
     manifest = file(params.manifest)
 
     MANIFEST_PARSE(manifest)
@@ -75,10 +78,10 @@ workflow {
     SKETCH_ASSEMBLY(MANIFEST_PARSE.out.assemblies)  
     | set { query_sketch }
 
-    cobs_matches.join(query_sketch)
-    | SKETCH_ANI_DIST
+    SKETCH_ANI_DIST(cobs_matches.join(query_sketch), sketchlib_db_ch)
     | PLOT_ANI
 
+    /*
     BIN_ANI_DISTANCES(SKETCH_ANI_DIST.out.query_ani)
     | splitCsv(header: true, sep: "\t")
     | map { meta, bin_info ->
@@ -95,7 +98,7 @@ workflow {
 
     bin2channel
     | groupTuple{ it[1] }
-    
+    */
     
     
     /*
@@ -104,9 +107,8 @@ workflow {
 
     //using clustering to subselect
     if (params.cluster_subselection) {
-
         //for this method we need all vs all ANI
-        SKETCH_SUBSET_TOTAL_ANI_DIST(cobs_matches)
+        SKETCH_SUBSET_TOTAL_ANI_DIST(cobs_matches, sketchlib_db_ch)
         | set { subset_ani }
 
         SKETCH_ANI_DIST.out.query_ani.join(subset_ani)
