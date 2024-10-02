@@ -38,7 +38,7 @@ def main(input_tsv, output_tsv, n):
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(description="bin ani_similarity values from TSV")
-    parser.add_argument("--input_tsv", required=True, help="Path to input TSV file of three columns ref query   ani")
+    parser.add_argument("--input_tsv", required=True, help="Path to input TSV file of three columns: ref, query, ani")
     parser.add_argument("--output_tsv", required=True, help="Path to save output binned tsv")
     parser.add_argument("-n", type=int, help="Number of QUERY entries to sample from each bin")
     
