@@ -36,6 +36,9 @@ include { BIN_ANI_DISTANCES                                                     
 include { EXTRACT_ASSEMBLYS_FROM_TAR                                                                 } from './modules/extract_assembly.nf'
 include { PLOT_ANI; SUBSELECT_GRAPH                                                                  } from './modules/plotting.nf'
 
+//from assorted-sub-workflows
+include { DOWNLOAD_METADATA                                                                          } from './assorted-sub-workflows/combined_input/modules/ena_downloader.nf'
+
 //
 // SUBWORKFLOWS
 //
@@ -76,6 +79,9 @@ workflow {
     | groupTuple
     | POSTPROCESS_COBS
     | set { cobs_matches }
+
+    cobs_matches
+    | DOWNLOAD_METADATA
 
     SKETCH_ASSEMBLY(MANIFEST_PARSE.out.assemblies)  
     | set { query_sketch }
