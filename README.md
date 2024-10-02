@@ -25,6 +25,7 @@ Removing --ani will calculate Jaccard distances.
 To query a set of assemblies against the index, first sketch the query sequences:
 sketchlib sketch -v -o query -k 17 -f queries.tsv -s 1000
 (where queries.tsv contains query samples with name and file location, tab separated)
+-s signifies the size of the sketch being produced with the default already being 1000
 
 Then query the index:
 ```

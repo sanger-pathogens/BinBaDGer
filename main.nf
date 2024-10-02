@@ -29,17 +29,18 @@ def printHelp() {
 // MODULES
 //
 
-include { COBS_SEARCH; POSTPROCESS_COBS                               } from './modules/cobs.nf'
-include { SKETCH_ASSEMBLY; SKETCH_ANI_DIST; SKETCH_SUBSET; SKETCH_ALL_DIST; SKETCH_TREE; GENERATE_DIST_MATRIX  } from './modules/sketchlib.nf'
-include { EXTRACT_ASSEMBLYS_FROM_TAR } from './modules/extract_assembly.nf'
-include { PLOT_ANI; PLOT_TREE; SUBSELECT_GRAPH                        } from './modules/plotting.nf'
-include { TRIM_TREE                                                   } from './modules/treemmer.nf'
+include { COBS_SEARCH; POSTPROCESS_COBS                                                              } from './modules/cobs.nf'
+include { SKETCH_ASSEMBLY; SKETCH_ANI_DIST; GENERATE_TOTAL_DIST_MATRIX; SKETCH_SUBSET_TOTAL_ANI_DIST } from './modules/sketchlib.nf'
+include { BIN_ANI_DISTANCES                                                                          } from './modules/binning.nf'
+include { EXTRACT_ASSEMBLYS_FROM_TAR                                                                 } from './modules/extract_assembly.nf'
+include { PLOT_ANI; SUBSELECT_GRAPH                                                                  } from './modules/plotting.nf'
 
 //
 // SUBWORKFLOWS
 //
 
-include { MANIFEST_PARSE   } from './subworkflows/manifest_parse.nf'
+include { MANIFEST_PARSE } from './subworkflows/manifest_parse.nf'
+include { BUILD_TREE     } from './subworkflows/build_tree.nf'
 
 /*
 ========================================================================================
@@ -57,10 +58,6 @@ workflow {
     channel.fromPath( "${params.cobs_base}/${params.species}*.xz" )
     | set {species_cobs_ch}
 
-    channel.fromPath("${params.assembly_base}/${params.species}*.xz")
-    | set { species_assembly_ch }
-
-
     manifest = file(params.manifest)
 
     MANIFEST_PARSE(manifest)
@@ -77,31 +74,27 @@ workflow {
     | SKETCH_ANI_DIST
     | PLOT_ANI
 
-    if (params.sketch_total_ani) {
-        
-        cobs_matches.combine(species_assembly_ch)
-        | EXTRACT_ASSEMBLYS_FROM_TAR
-        | transpose
-        | groupTuple
-        | SKETCH_SUBSET
-        | set { subset_sketch }
+    BIN_ANI_DISTANCES(SKETCH_ANI_DIST.out.query_ani)
+    
+    /*
+    optional extras
+    */
 
-        subset_sketch.join(query_sketch)
-        | SKETCH_ALL_DIST
-        | set { all_dists }
+    //using clustering to subselect
+    if (params.cluster_subselection) {
 
-        if (params.generate_tree) {             
-            SKETCH_TREE(all_dists)
-            | PLOT_TREE
+        //for this method we need all vs all ANI
+        SKETCH_SUBSET_TOTAL_ANI_DIST(cobs_matches)
+        | set { subset_ani }
 
-            if (params.trim_tree) { 
-                TRIM_TREE(SKETCH_TREE.out.tree)
-            }
-        }
-
-        if (params.cluster_subselection) {
-            GENERATE_DIST_MATRIX(all_dists)
-            | SUBSELECT_GRAPH
-        } 
+        SKETCH_ANI_DIST.out.query_ani.join(subset_ani)
+        | GENERATE_TOTAL_DIST_MATRIX
+        | SUBSELECT_GRAPH
+    } 
+    
+    //build a core genome tree for all samples (requires extraction)
+    if (params.generate_tree) {
+        BUILD_TREE(cobs_matches, query_sketch)
     }
 }
+
