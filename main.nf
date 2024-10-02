@@ -81,7 +81,6 @@ workflow {
     SKETCH_ANI_DIST(cobs_matches.join(query_sketch), sketchlib_db_ch)
     | PLOT_ANI
 
-    /*
     BIN_ANI_DISTANCES(SKETCH_ANI_DIST.out.query_ani)
     | splitCsv(header: true, sep: "\t")
     | map { meta, bin_info ->
@@ -97,8 +96,8 @@ workflow {
     //seperated as we can filter on metadata here!!!!
 
     bin2channel
-    | groupTuple{ it[1] }
-    */
+    | groupTuple(by: 1)
+    | view
     
     
     /*

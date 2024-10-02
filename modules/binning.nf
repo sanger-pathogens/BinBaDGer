@@ -16,6 +16,6 @@ process BIN_ANI_DISTANCES {
 
     script:
     """
-    bin_ani.py ${ani_tsv} ${meta.ID}_binned.tsv
+    bin_ani.py --input_tsv ${ani_tsv} --output_tsv ${meta.ID}_binned.tsv
     """
 }
