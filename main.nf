@@ -55,14 +55,20 @@ workflow {
         exit 0
     }
 
-    //set up channels for species cobs channel and assembly channels
+    /*
+    set up channels for species cobs channel and assembly channels
+    */
+
     channel.fromPath( "${params.cobs_base}/${params.species}*.xz" )
     | set {species_cobs_ch}
 
-    channel.fromPath( params.sketchlib_db )
+    channel.fromFilePairs( "${params.sketchlib_db}.{skd,skm}" )
+    | collect
     | set { sketchlib_db_ch }
 
     manifest = file(params.manifest)
+
+    //main logic
 
     MANIFEST_PARSE(manifest)
     | combine(species_cobs_ch)
@@ -93,7 +99,6 @@ workflow {
 
     bin2channel
     | groupTuple(by: 1)
-    | view
     
     
     /*
