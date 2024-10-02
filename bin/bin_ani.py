@@ -31,16 +31,16 @@ def main(input_tsv, output_tsv, n):
     
     df = bin_similarities(df, bins, bin_labels)
 
-    if n > 0
+    if n > 0:
         df = sample_from_bins(df, n)
     
     save_to_tsv(df , output_tsv)
 
 if __name__ == "__main__":
-    parser = argparse.ArgumentParser(description="bin ani_SIMILARITY values from TSV")
-    parser.add_argument("input_tsv", help="Path to input TSV file")
-    parser.add_argument("output_tsv", help="Path to save output TSV file")
-    parser.add_argument("n", type=int, default=0, help="Number of QUERY entries to sample from each bin")
+    parser = argparse.ArgumentParser(description="bin ani_similarity values from TSV")
+    parser.add_argument("--input_tsv", required=True, help="Path to input TSV file of three columns ref query   ani")
+    parser.add_argument("--output_tsv", required=True, help="Path to save output binned tsv")
+    parser.add_argument("-n", type=int, default=0, help="Number of QUERY entries to sample from each bin")
     
     args = parser.parse_args()
     

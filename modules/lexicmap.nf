@@ -10,13 +10,14 @@ process LEXICMAP_SEARCH {
 
     input:
     tuple val(meta), path(assembly)
+    path(lexicmap_db)
 
     output:
     tuple val(meta), path("${meta.ID}_lexicmap_matches.tsv"), emit: matched_genomes
 
     script:
     """
-    lexicmap search -d ${params.lexicmap_db} ${assembly} \\
+    lexicmap search -d ${lexicmap_db} ${assembly} \\
         -o ${meta.ID}_lexicmap_matches.tsv \\
         --min-qcov-per-hsp 70 \\
         --min-qcov-per-genome 70 \\

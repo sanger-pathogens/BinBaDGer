@@ -71,10 +71,6 @@ workflow {
     | POSTPROCESS_COBS
     | set { cobs_matches }
 
-    if (params.lexicmap_search) {
-        LEXICMAP_SEARCH(MANIFEST_PARSE.out.assemblies)
-    }
-
     SKETCH_ASSEMBLY(MANIFEST_PARSE.out.assemblies)  
     | set { query_sketch }
 
@@ -103,6 +99,13 @@ workflow {
     /*
     optional extras
     */
+
+    if (params.lexicmap_search) {
+        channel.fromPath( params.lexicmap_db )
+        | set { lexicmap_db_ch }
+
+        LEXICMAP_SEARCH(MANIFEST_PARSE.out.assemblies, lexicmap_db_ch)
+    }
 
     //using clustering to subselect
     if (params.cluster_subselection) {
