@@ -6,7 +6,7 @@ process TRIM_TREE {
 
     publishDir "${params.outdir}/trimmed_tree/${meta.ID}", mode: 'copy', overwrite: true
 
-    container '/data/pam/installs/images/treemmer-a3a1632.simg'
+    container 'quay.io/sangerpathogens/treemmer:a3a1632'
 
     input:
     tuple val(meta), path(newick)
