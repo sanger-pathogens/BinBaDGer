@@ -5,7 +5,7 @@ import argparse
 
 def bin_similarities(df, bins, bin_labels):
     """bins the ani values in the DataFrame."""
-    df['bin'] = pd.cut(df['ani'], bins=bins, labels=bin_labels)
+    df['ref_ani_bin'] = pd.cut(df['ani'], bins=bins, labels=bin_labels)
     return df
 
 def read_tsv(file_path):
@@ -19,7 +19,7 @@ def save_to_tsv(df, output_path):
 
 def sample_from_bins(df, n):
     """Randomly samples n Query entries from each bin."""
-    sampled_df = df.groupby('bin').apply(lambda x: x.sample(n=min(len(x), n)))
+    sampled_df = df.groupby('ref_ani_bin').apply(lambda x: x.sample(n=min(len(x), n)))
     sampled_df.reset_index(drop=True, inplace=True)
     return sampled_df
 

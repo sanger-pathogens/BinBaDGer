@@ -84,7 +84,7 @@ workflow {
     | map { meta, bin_info ->
         def meta_new = [:]
         meta_new.ID = meta.ID
-        meta_new.bin = bin_info.bin
+        meta_new.ref_ani_bin = bin_info.ref_ani_bin
         sample = bin_info.query
         
         [ sample, meta_new ] //staging sample infront for groupTuple to output from ENADownloader
