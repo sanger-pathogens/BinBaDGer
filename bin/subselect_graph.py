@@ -15,6 +15,31 @@ from scipy.spatial.distance import squareform
 from scipy.cluster.hierarchy import linkage, fcluster, dendrogram
 from networkx.algorithms.community import greedy_modularity_communities
 
+##### methods handling class #####
+
+class ClusteringMethods:
+    def __init__(self, **kwargs):
+        self.context = kwargs
+
+        self.methods = {
+            'kmeans': (kmeans_cluster, ['matrix'], []),
+            'heirarchy': (hierarchy_cluster, ['matrix', 'accessions'], []),
+            'hdbscan': (umap_clustering, ['matrix'], []),
+            'edge_based': (edge_based_cluster, ['matrix', 'accessions'], ['minimum_edge']),
+        }
+
+    def run_method(self, method_name):
+        method, required_args, optional_args = self.methods[method_name]
+        
+        missing_args = [arg for arg in required_args if arg not in self.context]
+        if missing_args:
+            raise ValueError(f"Missing required arguments for '{method_name}': {', '.join(missing_args)}")
+
+        method_args = [self.context[arg] for arg in required_args]
+        method_optional_args = [self.context[arg] for arg in optional_args if arg in self.context]
+
+        return method(*method_args, *method_optional_args)
+
 ##### input parsing functions #####
 
 def read_phylip_distance(phylip_file):
@@ -266,15 +291,6 @@ def relate_id_to_accession(clusters, accessions, output_file):
             out.write(f"cluster {cluster}: {', '.join(members)}\n")
 
 def main():
-    #methods dict key = name of arg to trigger
-    # value = tuple (method_function, [required_args], [optional_args (set by default)])
-    methods_dict = {
-    'kmeans': (kmeans_cluster, ['matrix'], []),
-    'heirarchy': (hierarchy_cluster, ['matrix', 'accessions'], []),
-    'hdbscan': (umap_clustering, ['matrix'], []),
-    'edge_based': (edge_based_cluster, ['matrix', 'accessions'], ['minimum_edge']),
-    }
-
     parser = argparse.ArgumentParser(description='subsample from a matrix')
     parser.add_argument("--phylip", 
     type=str,
@@ -284,36 +300,31 @@ def main():
     
     parser.add_argument('--methods', 
         nargs='+',
-        choices=list(methods_dict.keys()) + ['all'],  # only allow valid methods and all trigger
+        choices=['kmeans', 'heirarchy', 'hdbscan', 'edge_based', 'all'],
         required=True,
         help="method or methods to use for clustering"
+    ),
+
+    parser.add_argument('--minimum_edge', 
+        type=float,
+        default=0.005,
+        help="minimum_edge for bringing forward to network"
     ),
 
     args = parser.parse_args()
 
     _, accessions, matrix = read_phylip_distance(args.phylip)
 
-    context = {
-    'matrix': matrix,
-    'accessions': accessions,
-    'minimum_edge': 0.005,
-    }
+    clustering_methods = ClusteringMethods(
+        matrix=matrix,
+        accessions=accessions,
+        minimum_edge=args.minimum_edge
+    )
 
-
-    if 'all' in args.methods:
-        selected_methods = methods_dict.keys()
-    else:
-        selected_methods = args.methods
+    selected_methods = clustering_methods.methods.keys() if 'all' in args.methods else args.methods
 
     for method_name in selected_methods:
-        method, required_args, optional_args = methods_dict[method_name]
-
-        method_args = [context[arg] for arg in required_args if arg in context]
-
-        #unused currently but can take args from context where needed
-        method_optional_args = [context[arg] for arg in optional_args if arg in context]
-
-        result = method(*method_args, *method_optional_args)  # Unpack the arguments
+        result = clustering_methods.run_method(method_name)
 
         if method_name in ['kmeans', 'heirarchy', 'hdbscan']:
             plot_umap(matrix, result, f'{method_name}_umap.png')

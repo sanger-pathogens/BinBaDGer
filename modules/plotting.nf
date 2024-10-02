@@ -45,7 +45,7 @@ process PLOT_TREE {
 process SUBSELECT_GRAPH {
     tag "${meta.ID}"
     label "cpu_1"
-    label "mem_1"
+    label "mem_8"
     label "time_30m"
 
     publishDir "${params.outdir}/clusters/${meta.ID}", mode: 'copy', overwrite: true
