@@ -113,11 +113,8 @@ workflow {
 
     bin2channel
     | join(sample_metadata) //replace this with filtered metadata
-    | map { join_accession, bin_info, sample_metadata ->
-        [bin_info, sample_metadata] //accession is in the sample_metadata so can drop for now
-    }
-    | groupTuple
-    | map { bin_info, sample_metadata_list ->
+    | groupTuple(by: 1)
+    | map { join_accession, bin_info, sample_metadata_list -> //drop the join accession as it is in the sample_metadata
         sample_metadata_list.shuffle() //randomise the list maybe don't do this?
         def shuffled_n = sample_metadata_list.take(params.tmp_bin_subsample)
         [bin_info, shuffled_n]
