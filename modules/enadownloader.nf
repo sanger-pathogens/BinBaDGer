@@ -16,6 +16,6 @@ process DOWNLOAD_FASTQS {
 
     script:
     """
-    enadownloader --input ${accessions} --type ${params.accession_type} -d
+    enadownloader --input ${accessions} --type ${params.accession_type} --download-files
     """
 }

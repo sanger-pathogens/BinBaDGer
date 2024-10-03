@@ -118,18 +118,19 @@ workflow {
     }
     | groupTuple
     | map { bin_info, sample_metadata_list ->
-        def top_samples = sample_metadata_list.sort { it.base_count }.take(params.tmp_bin_subsample)
-        [bin_info, top_samples]
+        sample_metadata_list.shuffle() //randomise the list maybe don't do this?
+        def shuffled_n = sample_metadata_list.take(params.tmp_bin_subsample)
+        [bin_info, shuffled_n]
     }
     | transpose
     | set { samples_to_download }
 
     samples_to_download
     | collectFile { bin_info, top_samples ->
-        [ "${bin_info.ID}:${bin_info.ref_ani_bin}.txt", top_samples.sample_accession + '\n' ]   
+        [ "${bin_info.ID}_${bin_info.ref_ani_bin}.txt", top_samples.sample_accession + '\n' ]   
     }
     | map{ collected_tsv -> //super annoyingly collect file destroys all channel structure you once had
-        def (id, ref_ani_bin) = collected_tsv.baseName.split(':')
+        def (id, ref_ani_bin) = collected_tsv.baseName.split('_')
         def reconstructed_meta = [:]
         reconstructed_meta.ID = id
         reconstructed_meta.ref_ani_bin = ref_ani_bin
