@@ -32,10 +32,9 @@ def printHelp() {
 include { COBS_SEARCH; POSTPROCESS_COBS                               } from './modules/cobs.nf'
 include { DOWNLOAD_METADATA } from './assorted-sub-workflows/combined_input/modules/ena_downloader.nf'
 include { FILTER_METADATA } from './assorted-sub-workflows/combined_input/modules/filter_metadata.nf'
-include { SKETCH_ASSEMBLY; SKETCH_ANI_DIST; SKETCH_SUBSET; SKETCH_ALL_DIST; SKETCH_TREE; GENERATE_DIST_MATRIX  } from './modules/sketchlib.nf'
-include { EXTRACT_ASSEMBLYS_FROM_TAR } from './modules/extract_assembly.nf'
+include { SKETCH_ASSEMBLY; SKETCH_ANI_DIST; SKETCH_SUBSET; SKETCH_TREE  } from './modules/sketchlib.nf'
 include { PLOT_ANI; PLOT_TREE; SUBSELECT_GRAPH                        } from './modules/plotting.nf'
-include { TRIM_TREE                                                   } from './modules/treemmer.nf'
+include { BIN_ANI_DISTANCES                                           } from './modules/binning.nf'
 
 //
 // SUBWORKFLOWS
