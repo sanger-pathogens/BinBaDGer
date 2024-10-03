@@ -35,6 +35,7 @@ include { SKETCH_ASSEMBLY; SKETCH_ANI_DIST; GENERATE_TOTAL_DIST_MATRIX; SKETCH_S
 include { BIN_ANI_DISTANCES                                                                          } from './modules/binning.nf'
 include { EXTRACT_ASSEMBLYS_FROM_TAR                                                                 } from './modules/extract_assembly.nf'
 include { PLOT_ANI; SUBSELECT_GRAPH                                                                  } from './modules/plotting.nf'
+include { DOWNLOAD_FASTQS } from './modules/enadownloader.nf'
 
 //from assorted-sub-workflows
 include { DOWNLOAD_METADATA                                                                          } from './assorted-sub-workflows/combined_input/modules/ena_downloader.nf'
@@ -112,14 +113,33 @@ workflow {
 
     bin2channel
     | join(sample_metadata) //replace this with filtered metadata
-    | map{ join_accession, bin_information, metadata_list ->
-        [bin_information, metadata_list ] //the accession is already in the metadata
+    | map { join_accession, bin_info, sample_metadata ->
+        [bin_info, sample_metadata] //accession is in the sample_metadata so can drop for now
     }
-    
-    | set{ grouped_bins }
+    | groupTuple
+    | map { bin_info, sample_metadata_list ->
+        def top_samples = sample_metadata_list.sort { it.base_count }.take(params.tmp_bin_subsample)
+        [bin_info, top_samples]
+    }
+    | transpose
+    | set { samples_to_download }
 
-    grouped_bins
-    | view()
+    samples_to_download
+    | collectFile { bin_info, top_samples ->
+        [ "${bin_info.ID}:${bin_info.ref_ani_bin}.txt", top_samples.sample_accession + '\n' ]   
+    }
+    | map{ collected_tsv -> //super annoyingly collect file destroys all channel structure you once had
+        def (id, ref_ani_bin) = collected_tsv.baseName.split(':')
+        def reconstructed_meta = [:]
+        reconstructed_meta.ID = id
+        reconstructed_meta.ref_ani_bin = ref_ani_bin
+        [reconstructed_meta, collected_tsv]
+    }
+    | DOWNLOAD_FASTQS
+
+
+
+
     
     
     
