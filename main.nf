@@ -123,9 +123,6 @@ workflow {
         [bin_info, shuffled_n]
     }
     | transpose
-    | set { samples_to_download }
-
-    samples_to_download
     | collectFile { bin_info, top_samples ->
         [ "${bin_info.ID}_${bin_info.ref_ani_bin}.txt", top_samples.sample_accession + '\n' ]   
     }
