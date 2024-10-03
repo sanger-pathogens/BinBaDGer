@@ -80,8 +80,15 @@ workflow {
     | POSTPROCESS_COBS
     | set { cobs_matches }
 
-    cobs_matches
-    | DOWNLOAD_METADATA
+
+    DOWNLOAD_METADATA(cobs_matches)
+    | splitCsv(header: true, sep: "\t")
+    | map { meta, full_metadata ->
+        def sample_acc = full_metadata.sample_accession
+        def cleaned_map = full_metadata.findAll { k, v -> v != '' } //can remove once wills code is in just for ease of use
+        [ sample_acc, cleaned_map ] //staging sample_acc infront for groupTuple to output from ENADownloader
+    }
+    | set { sample_metadata }
 
     SKETCH_ASSEMBLY(MANIFEST_PARSE.out.assemblies)  
     | set { query_sketch }
@@ -104,7 +111,17 @@ workflow {
     //seperated as we can filter on metadata here!!!!
 
     bin2channel
-    | groupTuple(by: 1)
+    | join(sample_metadata) //replace this with filtered metadata
+    | map{ join_accession, bin_information, metadata_list ->
+        [bin_information, metadata_list ] //the accession is already in the metadata
+    }
+    
+    | set{ grouped_bins }
+
+    grouped_bins
+    | view()
+    
+    
     
     
     /*
