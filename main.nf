@@ -71,6 +71,7 @@ workflow {
     | set { sketchlib_db_ch }
 
     manifest = file(params.manifest)
+    filter_manifest = file(params.filter_manifest, checkIfExists: true)
 
     //main logic
 
@@ -91,11 +92,19 @@ workflow {
     }
     | set { sample_metadata }
 
+    FILTER_METADATA(
+        DOWNLOAD_METADATA.out.metadata_tsv,
+        filter_manifest,
+        ["sample_accession"],  // select columns
+        true  // remove_header
+    )
+    | set { filtered_cobs_matches }
+
     SKETCH_ASSEMBLY(MANIFEST_PARSE.out.assemblies)  
     | set { query_sketch }
 
     SKETCH_ANI_DIST(cobs_matches.join(query_sketch), sketchlib_db_ch)
-    | PLOT_ANI
+     | PLOT_ANI
 
     BIN_ANI_DISTANCES(SKETCH_ANI_DIST.out.query_ani)
     | splitCsv(header: true, sep: "\t")
