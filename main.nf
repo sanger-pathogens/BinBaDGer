@@ -29,15 +29,12 @@ def printHelp() {
 // MODULES
 //
 
-include { COBS_SEARCH; POSTPROCESS_COBS                                                              } from './modules/cobs.nf'
-include { LEXICMAP_SEARCH                                                                            } from './modules/lexicmap.nf'
-include { SKETCH_ASSEMBLY; SKETCH_ANI_DIST; GENERATE_TOTAL_DIST_MATRIX; SKETCH_SUBSET_TOTAL_ANI_DIST } from './modules/sketchlib.nf'
-include { BIN_ANI_DISTANCES                                                                          } from './modules/binning.nf'
-include { EXTRACT_ASSEMBLYS_FROM_TAR                                                                 } from './modules/extract_assembly.nf'
-include { PLOT_ANI; SUBSELECT_GRAPH                                                                  } from './modules/plotting.nf'
-
-//from assorted-sub-workflows
-include { DOWNLOAD_METADATA                                                                          } from './assorted-sub-workflows/combined_input/modules/ena_downloader.nf'
+include { COBS_SEARCH; POSTPROCESS_COBS                               } from './modules/cobs.nf'
+include { DOWNLOAD_METADATA } from './assorted-sub-workflows/combined_input/modules/ena_downloader.nf'
+include { FILTER_METADATA } from './assorted-sub-workflows/combined_input/modules/filter_metadata.nf'
+include { SKETCH_ASSEMBLY; SKETCH_ANI_DIST; SKETCH_SUBSET; SKETCH_TREE  } from './modules/sketchlib.nf'
+include { PLOT_ANI; PLOT_TREE; SUBSELECT_GRAPH                        } from './modules/plotting.nf'
+include { BIN_ANI_DISTANCES                                           } from './modules/binning.nf'
 
 //
 // SUBWORKFLOWS
@@ -70,6 +67,7 @@ workflow {
     | set { sketchlib_db_ch }
 
     manifest = file(params.manifest)
+    filter_manifest = file(params.filter_manifest, checkIfExists: true)
 
     //main logic
 
@@ -83,11 +81,19 @@ workflow {
     cobs_matches
     | DOWNLOAD_METADATA
 
+    FILTER_METADATA(
+        DOWNLOAD_METADATA.out.metadata_tsv,
+        filter_manifest,
+        ["sample_accession"],  // select columns
+        true  // remove_header
+    )
+    | set { filtered_cobs_matches }
+
     SKETCH_ASSEMBLY(MANIFEST_PARSE.out.assemblies)  
     | set { query_sketch }
 
     SKETCH_ANI_DIST(cobs_matches.join(query_sketch), sketchlib_db_ch)
-    | PLOT_ANI
+     | PLOT_ANI
 
     BIN_ANI_DISTANCES(SKETCH_ANI_DIST.out.query_ani)
     | splitCsv(header: true, sep: "\t")
