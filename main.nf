@@ -40,6 +40,8 @@ include { DOWNLOAD_FASTQS                                                       
 //from assorted-sub-workflows
 include { DOWNLOAD_METADATA                                                                          } from './assorted-sub-workflows/combined_input/modules/ena_downloader.nf'
 include { KRAKEN2BRACKEN                                                                             } from './assorted-sub-workflows/kraken2bracken/subworkflows/kraken2bracken.nf'
+include { FILTER_METADATA                                                                            } from './assorted-sub-workflows/combined_input/modules/filter_metadata.nf'
+
 
 //
 // SUBWORKFLOWS
@@ -99,7 +101,13 @@ workflow {
         ["sample_accession"],  // select columns
         true  // remove_header
     )
-    | set { filtered_cobs_matches }
+    | splitCsv(header: true, sep: "\t")
+    | map { meta, full_metadata ->
+        def sample_acc = full_metadata.sample_accession
+        def cleaned_map = full_metadata.findAll { k, v -> v != '' } //can remove once wills code is in just for ease of use
+        [ sample_acc, cleaned_map ] //staging sample_acc infront for groupTuple to output from ENADownloader
+    }
+    | set { filtered_metadata }
 
     SKETCH_ASSEMBLY(MANIFEST_PARSE.out.assemblies)  
     | set { query_sketch }
@@ -122,7 +130,7 @@ workflow {
     //seperated as we can filter on metadata here!!!!
 
     bin2channel
-    | join(sample_metadata) //replace this with filtered metadata
+    | join(filtered_metadata)
     | groupTuple(by: 1)
     | map { join_accession, bin_info, sample_metadata_list -> //drop the join accession as it is in the sample_metadata
         sample_metadata_list.shuffle() //randomise the list maybe don't do this?
