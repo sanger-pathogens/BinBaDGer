@@ -40,6 +40,7 @@ include { DOWNLOAD_FASTQS                                                       
 //from assorted-sub-workflows
 include { DOWNLOAD_METADATA                                                                          } from './assorted-sub-workflows/combined_input/modules/ena_downloader.nf'
 include { KRAKEN2BRACKEN                                                                             } from './assorted-sub-workflows/kraken2bracken/subworkflows/kraken2bracken.nf'
+include { FASTQC                                                                                     } from './assorted-sub-workflows/qc/modules/fastqc.nf'
 include { FILTER_METADATA                                                                            } from './assorted-sub-workflows/combined_input/modules/filter_metadata.nf'
 
 
@@ -95,26 +96,18 @@ workflow {
     }
     | set { sample_metadata }
 
-    /*
     FILTER_METADATA(
         DOWNLOAD_METADATA.out.metadata_tsv,
         filter_manifest,
         ["sample_accession"],  // select columns
         true  // remove_header
     )
-    | splitCsv(header: true, sep: "\t")
-    | map { meta, full_metadata ->
-        def sample_acc = full_metadata.sample_accession
-        def cleaned_map = full_metadata.findAll { k, v -> v != '' } //can remove once wills code is in just for ease of use
-        [ sample_acc, cleaned_map ] //staging sample_acc infront for groupTuple to output from ENADownloader
-    }
     | set { filtered_cobs_matches }
-    */
 
     SKETCH_ASSEMBLY(MANIFEST_PARSE.out.assemblies)  
     | set { query_sketch }
 
-    SKETCH_ANI_DIST(cobs_matches.join(query_sketch), sketchlib_db_ch)
+    SKETCH_ANI_DIST(filtered_cobs_matches.join(query_sketch), sketchlib_db_ch)
      | PLOT_ANI
 
     BIN_ANI_DISTANCES(SKETCH_ANI_DIST.out.query_ani)
@@ -134,13 +127,14 @@ workflow {
     bin2channel
     | join(sample_metadata) //replace this with filtered metadata
     | map { join_accession, bin_info, subsampled_metadata ->
-        def merged_meta = bin_info + subsampled_metadata
+        def merged_meta = [:]
+        merged_meta = bin_info + subsampled_metadata
         merged_meta.ID = subsampled_metadata.run_accession
-        [ merged_meta ]
+        merged_meta
     }
-    | filter { !it.fastq_ftp.contains(";") }
+    | filter { it.fastq_ftp.contains(';') }
     | map{ merged_meta ->
-        def (read1_ftp, read2_ftp) = merged_meta.fastq_ftp.split(';')
+        def (read1_ftp, read2_ftp) = merged_meta.fastq_ftp.split(';') //strangely its a list??? how
         def read1_ftp_url = "ftp://${read1_ftp}"
         def read2_ftp_url = "ftp://${read2_ftp}"
         [ merged_meta, read1_ftp_url, read2_ftp_url]
@@ -149,15 +143,7 @@ workflow {
     | set { read_ch }
 
     read_ch
-    | KRAKEN2BRACKEN
-
-    /*
-        | map { join_accession, bin_info, sample_metadata_list -> //drop the join accession as it is in the sample_metadata
-        sample_metadata_list.shuffle() //randomise the list maybe don't do this?
-        def shuffled_n = sample_metadata_list.take(params.tmp_bin_subsample)
-        [ bin_info, shuffled_n ]
-    }
-    */
+    | (KRAKEN2BRACKEN & FASTQC)
     
     /*
     optional extras
