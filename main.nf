@@ -132,7 +132,7 @@ workflow {
         merged_meta.ID = subsampled_metadata.run_accession
         merged_meta
     }
-    | filter { it.fastq_ftp.contains(';') }
+    | filter { it.fastq_ftp.contains(';') } //if its paired its seperated by a semi-colon
     | map{ merged_meta ->
         def (read1_ftp, read2_ftp) = merged_meta.fastq_ftp.split(';') //strangely its a list??? how
         def read1_ftp_url = "ftp://${read1_ftp}"
