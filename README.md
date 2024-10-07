@@ -1,9 +1,17 @@
+#  ATB dataset generator
 
 
 
 
+## Usage of scripts
 
+The ATB dataset generator relies on a number of scripts to help with the generation of appropriately filtered data and assembly clustering/deduplication.
 
+### filter_metadata.py
+
+This script facilitates filtering an input TSV file using a number of per-column filters (while ensuring that columns are correctly interpreted with a given type).
+
+For more information see: [Combined Input Subworkflow README](https://gitlab.internal.sanger.ac.uk/sanger-pathogens/pipelines/assorted-sub-workflows/-/blob/main/combined_input/README.md) 
 
 ## Information on using sketchlib
 To use these indices you will need to install the sketchlib software, which is
