@@ -95,6 +95,7 @@ workflow {
     }
     | set { sample_metadata }
 
+    /*
     FILTER_METADATA(
         DOWNLOAD_METADATA.out.metadata_tsv,
         filter_manifest,
@@ -107,7 +108,8 @@ workflow {
         def cleaned_map = full_metadata.findAll { k, v -> v != '' } //can remove once wills code is in just for ease of use
         [ sample_acc, cleaned_map ] //staging sample_acc infront for groupTuple to output from ENADownloader
     }
-    | set { filtered_metadata }
+    | set { filtered_cobs_matches }
+    */
 
     SKETCH_ASSEMBLY(MANIFEST_PARSE.out.assemblies)  
     | set { query_sketch }
@@ -119,7 +121,7 @@ workflow {
     | splitCsv(header: true, sep: "\t")
     | map { meta, bin_info ->
         def meta_new = [:]
-        meta_new.ID = meta.ID
+        meta_new.run_ID = meta.ID //so we can use ID from the sample later
         meta_new.ref_ani_bin = bin_info.ref_ani_bin
         sample = bin_info.query
         
@@ -130,19 +132,13 @@ workflow {
     //seperated as we can filter on metadata here!!!!
 
     bin2channel
-    | join(filtered_metadata)
-    | groupTuple(by: 1)
-    | map { join_accession, bin_info, sample_metadata_list -> //drop the join accession as it is in the sample_metadata
-        sample_metadata_list.shuffle() //randomise the list maybe don't do this?
-        def shuffled_n = sample_metadata_list.take(params.tmp_bin_subsample)
-        [ bin_info, shuffled_n ]
-    }
-    | transpose
-    | map { bin_info, subsampled_metadata ->
+    | join(sample_metadata) //replace this with filtered metadata
+    | map { join_accession, bin_info, subsampled_metadata ->
         def merged_meta = bin_info + subsampled_metadata
         merged_meta.ID = subsampled_metadata.run_accession
         [ merged_meta ]
     }
+    | filter { !it.fastq_ftp.contains(";") }
     | map{ merged_meta ->
         def (read1_ftp, read2_ftp) = merged_meta.fastq_ftp.split(';')
         def read1_ftp_url = "ftp://${read1_ftp}"
@@ -155,6 +151,13 @@ workflow {
     read_ch
     | KRAKEN2BRACKEN
 
+    /*
+        | map { join_accession, bin_info, sample_metadata_list -> //drop the join accession as it is in the sample_metadata
+        sample_metadata_list.shuffle() //randomise the list maybe don't do this?
+        def shuffled_n = sample_metadata_list.take(params.tmp_bin_subsample)
+        [ bin_info, shuffled_n ]
+    }
+    */
     
     /*
     optional extras
