@@ -35,10 +35,11 @@ include { SKETCH_ASSEMBLY; SKETCH_ANI_DIST; GENERATE_TOTAL_DIST_MATRIX; SKETCH_S
 include { BIN_ANI_DISTANCES                                                                          } from './modules/binning.nf'
 include { EXTRACT_ASSEMBLYS_FROM_TAR                                                                 } from './modules/extract_assembly.nf'
 include { PLOT_ANI; SUBSELECT_GRAPH                                                                  } from './modules/plotting.nf'
-include { DOWNLOAD_FASTQS } from './modules/enadownloader.nf'
+include { DOWNLOAD_FASTQS                                                                            } from './modules/stage_remote_fastqs.nf'
 
 //from assorted-sub-workflows
 include { DOWNLOAD_METADATA                                                                          } from './assorted-sub-workflows/combined_input/modules/ena_downloader.nf'
+include { KRAKEN2BRACKEN                                                                             } from './assorted-sub-workflows/kraken2bracken/subworkflows/kraken2bracken.nf'
 
 //
 // SUBWORKFLOWS
@@ -117,27 +118,26 @@ workflow {
     | map { join_accession, bin_info, sample_metadata_list -> //drop the join accession as it is in the sample_metadata
         sample_metadata_list.shuffle() //randomise the list maybe don't do this?
         def shuffled_n = sample_metadata_list.take(params.tmp_bin_subsample)
-        [bin_info, shuffled_n]
+        [ bin_info, shuffled_n ]
     }
     | transpose
-    | collectFile { bin_info, top_samples ->
-        [ "${bin_info.ID}_${bin_info.ref_ani_bin}.txt", top_samples.sample_accession + '\n' ]   
+    | map { bin_info, subsampled_metadata ->
+        def merged_meta = bin_info + subsampled_metadata
+        merged_meta.ID = subsampled_metadata.run_accession
+        [ merged_meta ]
     }
-    | map{ collected_tsv -> //super annoyingly collect file destroys all channel structure you once had
-        def (id, ref_ani_bin) = collected_tsv.baseName.split('_')
-        def reconstructed_meta = [:]
-        reconstructed_meta.ID = id
-        reconstructed_meta.ref_ani_bin = ref_ani_bin
-        [reconstructed_meta, collected_tsv]
+    | map{ merged_meta ->
+        def (read1_ftp, read2_ftp) = merged_meta.fastq_ftp.split(';')
+        def read1_ftp_url = "ftp://${read1_ftp}"
+        def read2_ftp_url = "ftp://${read2_ftp}"
+        [ merged_meta, read1_ftp_url, read2_ftp_url]
     }
     | DOWNLOAD_FASTQS
+    | set { read_ch }
 
+    read_ch
+    | KRAKEN2BRACKEN
 
-
-
-    
-    
-    
     
     /*
     optional extras
