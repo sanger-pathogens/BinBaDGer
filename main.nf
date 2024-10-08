@@ -91,7 +91,7 @@ workflow {
     | splitCsv(header: true, sep: "\t")
     | map { meta, full_metadata ->
         def sample_acc = full_metadata.sample_accession
-        def cleaned_map = full_metadata.findAll { k, v -> v != '' } //can remove once wills code is in just for ease of use
+        def cleaned_map = full_metadata.findAll { k, v -> v != '' }
         [ sample_acc, cleaned_map ] //staging sample_acc infront for groupTuple to output from ENADownloader
     }
     | set { sample_metadata }
@@ -114,7 +114,7 @@ workflow {
     | splitCsv(header: true, sep: "\t")
     | map { meta, bin_info ->
         def meta_new = [:]
-        meta_new.run_ID = meta.ID //so we can use ID from the sample later
+        meta_new.reference_ID = meta.ID //so we can use ID from the sample later
         meta_new.ref_ani_bin = bin_info.ref_ani_bin
         sample = bin_info.query
         
@@ -129,7 +129,7 @@ workflow {
     | map { join_accession, bin_info, subsampled_metadata ->
         def merged_meta = [:]
         merged_meta = bin_info + subsampled_metadata
-        merged_meta.ID = subsampled_metadata.run_accession
+        merged_meta.ID = join_accession
         merged_meta
     }
     | filter { it.fastq_ftp.contains(';') } //if its paired its seperated by a semi-colon
@@ -137,7 +137,7 @@ workflow {
         def (read1_ftp, read2_ftp) = merged_meta.fastq_ftp.split(';')
         def read1_ftp_url = "ftp://${read1_ftp}"
         def read2_ftp_url = "ftp://${read2_ftp}"
-        [ merged_meta, read1_ftp_url, read2_ftp_url]
+        [ merged_meta, read1_ftp_url, read2_ftp_url ]
     }
     | DOWNLOAD_FASTQS
     | set { read_ch }
@@ -159,7 +159,7 @@ workflow {
     //using clustering to subselect
     if (params.cluster_subselection) {
         //for this method we need all vs all ANI
-        SKETCH_SUBSET_TOTAL_ANI_DIST(cobs_matches, sketchlib_db_ch)
+        SKETCH_SUBSET_TOTAL_ANI_DIST(filtered_cobs_matches, sketchlib_db_ch)
         | set { subset_ani }
 
         SKETCH_ANI_DIST.out.query_ani.join(subset_ani)
@@ -169,7 +169,7 @@ workflow {
     
     //build a core genome tree for all samples (requires extraction of assemblies)
     if (params.generate_tree) {
-        BUILD_TREE(cobs_matches, query_sketch)
+        BUILD_TREE(filtered_cobs_matches, query_sketch)
     }
 }
 
