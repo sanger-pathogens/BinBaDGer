@@ -100,7 +100,8 @@ workflow {
         DOWNLOAD_METADATA.out.metadata_tsv,
         filter_manifest,
         ["sample_accession"],  // select columns
-        true  // remove_header
+        true,  // remove_header
+        ["sample_accession"] // columns to drop duplicates from
     )
     | set { filtered_cobs_matches }
 
