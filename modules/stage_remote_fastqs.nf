@@ -5,7 +5,7 @@ process DOWNLOAD_FASTQS {
     label 'time_30m'
     maxForks 10
 
-    publishDir "${params.outdir}/${meta.ID}/fastqs", mode: 'copy', overwrite: true
+    publishDir "${params.outdir}/${meta.ID}/fastqs", mode: 'copy', overwrite: true, enabled: params.output_all_fastqs
 
     input:
     tuple val(meta), val(fastq_path_1), val(fastq_path_2)
