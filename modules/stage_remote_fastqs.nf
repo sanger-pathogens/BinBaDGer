@@ -7,6 +7,8 @@ process DOWNLOAD_FASTQS {
 
     publishDir "${params.outdir}/${meta.ID}/fastqs", mode: 'copy', overwrite: true, enabled: params.output_all_fastqs
 
+    container 'ubuntu:24.04'
+
     input:
     tuple val(meta), val(fastq_path_1), val(fastq_path_2)
 
