@@ -80,11 +80,11 @@ process SKETCH_SUBSET_TOTAL_ANI_DIST {
     tuple val(sketchlib_db), path(sketchlib_db_files)
 
     output:
-    tuple val(meta), path("${meta.ID}_betweenness_ani.tsv"), emit: subset_ani
+    tuple val(meta), path("${meta.reference_id}_${meta.ref_ani_bin}_betweenness_ani.tsv"), emit: subset_ani
 
     script:
     """
-    sketchlib dist -v -k 17 --subset ${subset} --ani ${sketchlib_db}.skm > ${meta.ID}_betweenness_ani.tsv
+    sketchlib dist -v -k 17 --subset ${subset} --ani ${sketchlib_db}.skm > ${meta.reference_id}_${meta.ref_ani_bin}_betweenness_ani.tsv
     """
 }
 
@@ -142,17 +142,17 @@ process GENERATE_TOTAL_DIST_MATRIX {
 
     container 'quay.io/ssd28/experimental/rapidnj:2.3.2-c1'
 
-    publishDir "${params.outdir}/tree/${meta.ID}", mode: 'copy', overwrite: true
+    publishDir "${params.outdir}/tree/${meta_id}", mode: 'copy', overwrite: true
 
     input:
-    tuple val(meta), path(query_to_all_tsv), path(betweenness_tsv)
+    tuple val(meta_id), path(query_to_all_tsv), val(meta), path(betweenness_tsv)
 
     output:
     tuple val(meta), path("*.phylip"), emit: matrix
 
     script:
     """
-    cat ${betweenness_tsv} ${query_to_all_tsv} > ${meta.ID}_total_ani_data.tsv
-    ani_tree_tools.py --dist_tsv_path ${meta.ID}_total_ani_data.tsv --meta_ID ${meta.ID}
+    cat ${betweenness_tsv} ${query_to_all_tsv} > ${meta.ref_ani_bin}_total_ani_data.tsv
+    ani_tree_tools.py --dist_tsv_path ${meta.ref_ani_bin}_total_ani_data.tsv --meta_ID ${meta.ref_ani_bin}
     """
 }

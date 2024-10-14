@@ -123,7 +123,31 @@ workflow {
     }
     | set{ bin2channel }
 
-    //seperated as we can filter on metadata here!!!!
+    //using clustering to subselect
+    if (params.cluster_subselection) {
+        //for this method we need all vs all ANI
+        bin2channel
+        | collectFile { sample, meta ->
+            [ "${meta.reference_ID}_${meta.ref_ani_bin}_samples.txt", sample + '\n' ]
+        }
+        | view
+
+        /*
+        SKETCH_SUBSET_TOTAL_ANI_DIST(samples, sketchlib_db_ch)
+        | map { meta, file ->
+            [ meta.reference_ID, meta, file ]
+        }
+        | set { subset_ani }
+
+        SKETCH_ANI_DIST.out.query_ani
+        .map{ meta, file ->
+            [ meta.ID, file ]
+        }
+        .join(subset_ani)
+        | GENERATE_TOTAL_DIST_MATRIX
+        | SUBSELECT_GRAPH
+        */
+    }
 
     bin2channel
     | join(sample_metadata) //replace this with filtered metadata
@@ -157,17 +181,6 @@ workflow {
         LEXICMAP_SEARCH(MANIFEST_PARSE.out.assemblies, lexicmap_db_ch)
     }
 
-    //using clustering to subselect
-    if (params.cluster_subselection) {
-        //for this method we need all vs all ANI
-        SKETCH_SUBSET_TOTAL_ANI_DIST(filtered_cobs_matches, sketchlib_db_ch)
-        | set { subset_ani }
-
-        SKETCH_ANI_DIST.out.query_ani.join(subset_ani)
-        | GENERATE_TOTAL_DIST_MATRIX
-        | SUBSELECT_GRAPH
-    } 
-    
     //build a core genome tree for all samples (requires extraction of assemblies)
     if (params.generate_tree) {
         BUILD_TREE(filtered_cobs_matches, query_sketch)
