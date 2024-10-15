@@ -159,7 +159,7 @@ workflow {
     //using clustering to subselect
     if (params.cluster_subselection) {
         //for this method we need all vs all ANI
-        SKETCH_SUBSET_TOTAL_ANI_DIST(cobs_matches, sketchlib_db_ch)
+        SKETCH_SUBSET_TOTAL_ANI_DIST(filtered_cobs_matches, sketchlib_db_ch)
         | set { subset_ani }
 
         SKETCH_ANI_DIST.out.query_ani.join(subset_ani)
@@ -169,7 +169,7 @@ workflow {
     
     //build a core genome tree for all samples (requires extraction of assemblies)
     if (params.generate_tree) {
-        BUILD_TREE(cobs_matches, query_sketch)
+        BUILD_TREE(filtered_cobs_matches, query_sketch)
     }
 }
 
