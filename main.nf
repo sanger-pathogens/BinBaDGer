@@ -34,6 +34,7 @@ include { LEXICMAP_SEARCH                                                       
 include { SKETCH_ASSEMBLY; SKETCH_ANI_DIST; GENERATE_TOTAL_DIST_MATRIX; SKETCH_SUBSET_TOTAL_ANI_DIST } from './modules/sketchlib.nf'
 include { BIN_ANI_DISTANCES                                                                          } from './modules/binning.nf'
 include { EXTRACT_ASSEMBLYS_FROM_TAR                                                                 } from './modules/extract_assembly.nf'
+include { COLLECT_FILE } from './modules/collect_file.nf'
 include { PLOT_ANI; SUBSELECT_GRAPH                                                                  } from './modules/plotting.nf'
 include { DOWNLOAD_FASTQS                                                                            } from './modules/stage_remote_fastqs.nf'
 
@@ -127,26 +128,20 @@ workflow {
     if (params.cluster_subselection) {
         //for this method we need all vs all ANI
         bin2channel
-        | collectFile { sample, meta ->
-            [ "${meta.reference_ID}_${meta.ref_ani_bin}_samples.txt", sample + '\n' ]
-        }
-        | view
+        | groupTuple(by: 1)
+        | COLLECT_FILE
+        | set { samples }
 
-        /*
         SKETCH_SUBSET_TOTAL_ANI_DIST(samples, sketchlib_db_ch)
-        | map { meta, file ->
-            [ meta.reference_ID, meta, file ]
-        }
         | set { subset_ani }
 
         SKETCH_ANI_DIST.out.query_ani
-        .map{ meta, file ->
-            [ meta.ID, file ]
+        | combine(subset_ani)
+        | filter { query_meta, query_file, subset_meta, subset_file ->
+            query_meta.ID == subset_meta.reference_ID
         }
-        .join(subset_ani)
         | GENERATE_TOTAL_DIST_MATRIX
         | SUBSELECT_GRAPH
-        */
     }
 
     bin2channel
