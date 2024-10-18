@@ -48,6 +48,7 @@ def read_phylip_distance(phylip_file):
 
         #might be useful
         num_samples = int(lines[0].strip())
+        print(f'Number of samples: {num_samples if num_samples else 1}')
 
         accessions = []
         matrix = []
@@ -169,7 +170,7 @@ def edge_based_cluster(matrix, accessions, threshold):
     if clusters:
         plot_network_subclusters(clusters, G)
     else:
-        print('No clusters generated, likely not enough samples')
+        print('No clusters generated')
 
     return clusters
 
