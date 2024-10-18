@@ -57,7 +57,7 @@ process SUBSELECT_GRAPH {
 
     output:
     tuple val(meta), path("*.csv"), emit: clusters, optional: true
-    tuple val(meta), path("*.png")
+    tuple val(meta), path("*.png"), optional: true
     tuple val(meta), path("*.txt"), optional: true
 
     script:

@@ -166,7 +166,10 @@ def edge_based_cluster(matrix, accessions, threshold):
     
     clusters = greedy_modularity_communities(G)
     
-    plot_network_subclusters(clusters, G)
+    if clusters:
+        plot_network_subclusters(clusters, G)
+    else:
+        print('No clusters generated, likely not enough samples')
 
     return clusters
 
