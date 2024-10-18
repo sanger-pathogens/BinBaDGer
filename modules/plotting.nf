@@ -43,12 +43,12 @@ process PLOT_TREE {
 }
 
 process SUBSELECT_GRAPH {
-    tag "${meta.ID}"
+    tag "${meta.reference_ID}_${meta.ref_ani_bin}"
     label "cpu_1"
     label "mem_8"
     label "time_30m"
 
-    publishDir "${params.outdir}/clusters/${meta.reference_id}/${meta.ref_ani_bin}", mode: 'copy', overwrite: true
+    publishDir "${params.outdir}/clusters/${meta.reference_ID}/${meta.ref_ani_bin}", mode: 'copy', overwrite: true
 
     container 'quay.io/sangerpathogens/python_graphics:1.1.3'
 

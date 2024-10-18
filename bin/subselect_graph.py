@@ -228,7 +228,7 @@ def plot_network_subclusters(clusters, G):
     
     # Create subplots
     fig, axes = plt.subplots(grid_size, grid_size, figsize=(15, 15))
-    axes = axes.flatten()
+    axes = np.array(axes).flatten()
     
     # Create a color map for clusters
     cluster_colors = plt.cm.get_cmap('tab10', num_clusters)

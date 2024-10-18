@@ -68,7 +68,7 @@ process SKETCH_ANI_DIST {
 }
 
 process SKETCH_SUBSET_TOTAL_ANI_DIST {
-    tag "${meta.ID}"
+    tag "${meta.reference_ID}_${meta.ref_ani_bin}"
     label "cpu_2"
     label "mem_500M"
     label "time_30m"
@@ -135,24 +135,23 @@ process SKETCH_TREE {
 }
 
 process GENERATE_TOTAL_DIST_MATRIX {
-    tag "${query_meta.ID}"
+    tag "${meta.reference_ID}_${meta.ref_ani_bin}"
     label "cpu_4"
     label "mem_8"
     label "time_1"
 
     container 'quay.io/ssd28/experimental/rapidnj:2.3.2-c1'
 
-    publishDir "${params.outdir}/tree/${query_meta.ID}", mode: 'copy', overwrite: true
+    publishDir "${params.outdir}/tree/${meta.reference_ID}", mode: 'copy', overwrite: true
 
     input:
-    tuple val(query_meta), path(query_to_all_tsv), val(betweenness_meta), path(betweenness_tsv)
+    tuple val(meta), path(betweenness_tsv)
 
     output:
-    tuple val(betweenness_meta), path("*.phylip"), emit: matrix
+    tuple val(meta), path("*.phylip"), emit: matrix
 
     script:
     """
-    cat ${betweenness_tsv} ${query_to_all_tsv} > ${betweenness_meta.ref_ani_bin}_total_ani_data.tsv
-    ani_tree_tools.py --dist_tsv_path ${betweenness_meta.ref_ani_bin}_total_ani_data.tsv --meta_ID ${betweenness_meta.ref_ani_bin}
+    ani_tree_tools.py --dist_tsv_path ${betweenness_tsv} --meta_ID ${meta.ref_ani_bin}
     """
 }

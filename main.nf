@@ -133,13 +133,6 @@ workflow {
         | set { samples }
 
         SKETCH_SUBSET_TOTAL_ANI_DIST(samples, sketchlib_db_ch)
-        | set { subset_ani }
-
-        SKETCH_ANI_DIST.out.query_ani
-        | combine(subset_ani)
-        | filter { query_meta, query_file, subset_meta, subset_file ->
-            query_meta.ID == subset_meta.reference_ID
-        }
         | GENERATE_TOTAL_DIST_MATRIX
         | SUBSELECT_GRAPH
     }
