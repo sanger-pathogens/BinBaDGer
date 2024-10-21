@@ -43,12 +43,12 @@ process PLOT_TREE {
 }
 
 process SUBSELECT_GRAPH {
-    tag "${meta.ID}"
+    tag "${meta.reference_ID}_${meta.ref_ani_bin}"
     label "cpu_1"
     label "mem_8"
     label "time_30m"
 
-    publishDir "${params.outdir}/clusters/${meta.ID}", mode: 'copy', overwrite: true
+    publishDir "${params.outdir}/clusters/${meta.reference_ID}/${meta.ref_ani_bin}", mode: 'copy', overwrite: true
 
     container 'quay.io/sangerpathogens/python_graphics:1.1.3'
 
@@ -57,7 +57,7 @@ process SUBSELECT_GRAPH {
 
     output:
     tuple val(meta), path("*.csv"), emit: clusters, optional: true
-    tuple val(meta), path("*.png")
+    tuple val(meta), path("*.png"), optional: true
     tuple val(meta), path("*.txt"), optional: true
 
     script:
