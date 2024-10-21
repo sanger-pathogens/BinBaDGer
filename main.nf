@@ -36,7 +36,7 @@ include { BIN_ANI_DISTANCES                                                     
 include { EXTRACT_ASSEMBLYS_FROM_TAR                                                                 } from './modules/extract_assembly.nf'
 include { COLLECT_FILE } from './modules/collect_file.nf'
 include { PLOT_ANI; SUBSELECT_GRAPH                                                                  } from './modules/plotting.nf'
-include { DOWNLOAD_FASTQS } from './modules/stage_remote_fastqs.nf'
+include { DOWNLOAD_FASTQS; PUBLISH_FASTQS } from './modules/fastqs.nf'
 
 //from assorted-sub-workflows
 include { DOWNLOAD_METADATA                                                                          } from './assorted-sub-workflows/combined_input/modules/ena_downloader.nf'
@@ -156,9 +156,13 @@ workflow {
 
     read_ch
     | QC
-    | filter { it[1] && it[2] }
-    | view
-    //| PUBLISH_FASTQS
+    | filter { it[1] == 'pass' && it[2] == 'pass' }
+    | map { it -> it.take(1) } //only keep meta
+    | set { filtered_samples }
+
+    filtered_samples
+    | join(read_ch)
+    | PUBLISH_FASTQS
     
     /*
     optional extras
