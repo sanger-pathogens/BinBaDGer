@@ -48,6 +48,7 @@ def read_phylip_distance(phylip_file):
 
         #might be useful
         num_samples = int(lines[0].strip())
+        print(f'Number of samples: {num_samples if num_samples else 1}')
 
         accessions = []
         matrix = []
@@ -166,7 +167,10 @@ def edge_based_cluster(matrix, accessions, threshold):
     
     clusters = greedy_modularity_communities(G)
     
-    plot_network_subclusters(clusters, G)
+    if clusters:
+        plot_network_subclusters(clusters, G)
+    else:
+        print('No clusters generated')
 
     return clusters
 
@@ -228,7 +232,7 @@ def plot_network_subclusters(clusters, G):
     
     # Create subplots
     fig, axes = plt.subplots(grid_size, grid_size, figsize=(15, 15))
-    axes = axes.flatten()
+    axes = np.array(axes).flatten()
     
     # Create a color map for clusters
     cluster_colors = plt.cm.get_cmap('tab10', num_clusters)

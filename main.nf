@@ -34,6 +34,7 @@ include { LEXICMAP_SEARCH                                                       
 include { SKETCH_ASSEMBLY; SKETCH_ANI_DIST; GENERATE_TOTAL_DIST_MATRIX; SKETCH_SUBSET_TOTAL_ANI_DIST } from './modules/sketchlib.nf'
 include { BIN_ANI_DISTANCES                                                                          } from './modules/binning.nf'
 include { EXTRACT_ASSEMBLYS_FROM_TAR                                                                 } from './modules/extract_assembly.nf'
+include { COLLECT_FILE } from './modules/collect_file.nf'
 include { PLOT_ANI; SUBSELECT_GRAPH                                                                  } from './modules/plotting.nf'
 include { DOWNLOAD_FASTQS                                                                            } from './modules/stage_remote_fastqs.nf'
 
@@ -123,7 +124,18 @@ workflow {
     }
     | set{ bin2channel }
 
-    //seperated as we can filter on metadata here!!!!
+    //using clustering to subselect
+    if (params.cluster_subselection) {
+        //for this method we need all vs all ANI
+        bin2channel
+        | groupTuple(by: 1)
+        | COLLECT_FILE
+        | set { samples }
+
+        SKETCH_SUBSET_TOTAL_ANI_DIST(samples, sketchlib_db_ch)
+        | GENERATE_TOTAL_DIST_MATRIX
+        | SUBSELECT_GRAPH
+    }
 
     bin2channel
     | join(sample_metadata) //replace this with filtered metadata
@@ -157,17 +169,6 @@ workflow {
         LEXICMAP_SEARCH(MANIFEST_PARSE.out.assemblies, lexicmap_db_ch)
     }
 
-    //using clustering to subselect
-    if (params.cluster_subselection) {
-        //for this method we need all vs all ANI
-        SKETCH_SUBSET_TOTAL_ANI_DIST(filtered_cobs_matches, sketchlib_db_ch)
-        | set { subset_ani }
-
-        SKETCH_ANI_DIST.out.query_ani.join(subset_ani)
-        | GENERATE_TOTAL_DIST_MATRIX
-        | SUBSELECT_GRAPH
-    } 
-    
     //build a core genome tree for all samples (requires extraction of assemblies)
     if (params.generate_tree) {
         BUILD_TREE(filtered_cobs_matches, query_sketch)
