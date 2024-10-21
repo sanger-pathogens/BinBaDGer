@@ -157,7 +157,7 @@ workflow {
     read_ch
     | QC
     | filter { it[1] == 'pass' && it[2] == 'pass' }
-    | map { it -> it.take(1) } //only keep meta
+    | map { it -> it[0] } //only keep meta
     | set { filtered_samples }
 
     filtered_samples
