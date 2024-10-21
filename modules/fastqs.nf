@@ -30,7 +30,7 @@ process DOWNLOAD_FASTQS {
 process PUBLISH_FASTQS {
     tag "${meta.ID}"
     label 'cpu_1'
-    label 'mem_1'
+    label 'mem_100M'
     label 'time_30m'
 
     publishDir "${params.outdir}/${meta.ID}/fastqs", mode: 'copy', overwrite: true
@@ -40,4 +40,8 @@ process PUBLISH_FASTQS {
 
     output:
     tuple val(meta), path(read_1), path(read_2), emit: fastqs
+
+    script:
+    """
+    """
 }
