@@ -167,8 +167,6 @@ workflow {
     | join(read_ch)
     | PUBLISH_FASTQS
     
-    
-    
     /*
     optional extras
     */
