@@ -129,43 +129,44 @@ workflow {
     }
     | set{ bin2channel }
 
-    //for this method we need all vs all ANI
-    bin2channel
-    | groupTuple(by: 1)
-    | COLLECT_FILE
-    | set { samples }
+    if ( params.decreplicate_bins ) {
+        //for this method we need all vs all ANI
+        bin2channel
+        | groupTuple(by: 1)
+        | COLLECT_FILE
+        | set { samples }
 
-    SKETCH_SUBSET_TOTAL_ANI_DIST(samples, sketchlib_db_ch)
-    | GENERATE_TOTAL_DIST_MATRIX
-    | SUBSELECT_GRAPH
+        SKETCH_SUBSET_TOTAL_ANI_DIST(samples, sketchlib_db_ch)
+        | GENERATE_TOTAL_DIST_MATRIX
+        | SUBSELECT_GRAPH
 
-    bin2channel
-    | join(sample_metadata) //replace this with filtered metadata
-    | map { join_accession, bin_info, subsampled_metadata ->
-        def merged_meta = [:]
-        merged_meta = bin_info + subsampled_metadata
-        merged_meta.ID = join_accession
-        merged_meta
-    }
-    | filter { it.fastq_ftp.contains(';') } //if its paired its seperated by a semi-colon
-    | map{ merged_meta ->
-        def (read1_ftp, read2_ftp) = merged_meta.fastq_ftp.split(';')
-        def read1_ftp_url = "ftp://${read1_ftp}"
-        def read2_ftp_url = "ftp://${read2_ftp}"
-        [ merged_meta, read1_ftp_url, read2_ftp_url ]
-    }
-    | DOWNLOAD_FASTQS
-    | set { read_ch }
+        bin2channel
+        | join(sample_metadata) //replace this with filtered metadata
+        | map { join_accession, bin_info, subsampled_metadata ->
+            def merged_meta = [:]
+            merged_meta = bin_info + subsampled_metadata
+            merged_meta.ID = join_accession
+            merged_meta
+        }
+        | filter { it.fastq_ftp.contains(';') } //if its paired its seperated by a semi-colon
+        | map{ merged_meta ->
+            def (read1_ftp, read2_ftp) = merged_meta.fastq_ftp.split(';')
+            def read1_ftp_url = "ftp://${read1_ftp}"
+            def read2_ftp_url = "ftp://${read2_ftp}"
+            [ merged_meta, read1_ftp_url, read2_ftp_url ]
+        }
+        | DOWNLOAD_FASTQS
+        | set { read_ch }
 
-    read_ch
-    | QC
-    | filter { it[1] == 'pass' && it[2] == 'pass' }
-    | map { it -> it[0] } //only keep meta
-    | set { filtered_samples }
+        read_ch
+        | QC
+        | filter { it[1] == 'pass' && it[2] == 'pass' }
+        | map { it -> it[0] } //only keep meta
+        | set { filtered_samples }
 
-    filtered_samples
-    | join(read_ch)
-    | PUBLISH_FASTQS
+        filtered_samples
+        | join(read_ch)
+        | PUBLISH_FASTQS
     
     /*
     optional extras
