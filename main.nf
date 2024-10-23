@@ -139,7 +139,6 @@ workflow {
     | GENERATE_TOTAL_DIST_MATRIX
     | SUBSELECT_GRAPH
 
-    /*
     bin2channel
     | join(sample_metadata) //replace this with filtered metadata
     | map { join_accession, bin_info, subsampled_metadata ->
