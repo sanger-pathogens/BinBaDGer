@@ -311,7 +311,7 @@ def main():
 
     parser.add_argument('--minimum_edge', 
         type=float,
-        default=0.005,
+        default=0.001,
         help="minimum_edge for bringing forward to network"
     ),
 

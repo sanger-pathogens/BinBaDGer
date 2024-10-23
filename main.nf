@@ -75,7 +75,6 @@ workflow {
     | set { sketchlib_db_ch }
 
     manifest = file(params.manifest)
-    filter_manifest = file(params.filter_manifest, checkIfExists: true)
 
     //main logic
 
@@ -95,20 +94,27 @@ workflow {
         [ sample_acc, cleaned_map ] //staging sample_acc infront for groupTuple to output from ENADownloader
     }
     | set { sample_metadata }
+    
+    if ( params.filter_manifest ) {
+        filter_manifest = file(params.filter_manifest, checkIfExists: true)
 
-    FILTER_METADATA(
-        DOWNLOAD_METADATA.out.metadata_tsv,
-        filter_manifest,
-        ["sample_accession"],  // select columns
-        true,  // remove_header
-        ["sample_accession"] // columns to drop duplicates from
-    )
-    | set { filtered_cobs_matches }
+        FILTER_METADATA(
+            DOWNLOAD_METADATA.out.metadata_tsv,
+            filter_manifest,
+            ["sample_accession"],  // select columns
+            true,  // remove_header
+            ["sample_accession"] // columns to drop duplicates from
+        )
+        | set { ready_cobs_matches }
+    } else {
+        cobs_matches
+        | set { ready_cobs_matches }
+    }
 
     SKETCH_ASSEMBLY(MANIFEST_PARSE.out.assemblies)  
     | set { query_sketch }
 
-    SKETCH_ANI_DIST(filtered_cobs_matches.join(query_sketch), sketchlib_db_ch)
+    SKETCH_ANI_DIST(ready_cobs_matches.join(query_sketch), sketchlib_db_ch)
      | PLOT_ANI
 
     BIN_ANI_DISTANCES(SKETCH_ANI_DIST.out.query_ani)
@@ -123,19 +129,17 @@ workflow {
     }
     | set{ bin2channel }
 
-    //using clustering to subselect
-    if (params.cluster_subselection) {
-        //for this method we need all vs all ANI
-        bin2channel
-        | groupTuple(by: 1)
-        | COLLECT_FILE
-        | set { samples }
+    //for this method we need all vs all ANI
+    bin2channel
+    | groupTuple(by: 1)
+    | COLLECT_FILE
+    | set { samples }
 
-        SKETCH_SUBSET_TOTAL_ANI_DIST(samples, sketchlib_db_ch)
-        | GENERATE_TOTAL_DIST_MATRIX
-        | SUBSELECT_GRAPH
-    }
+    SKETCH_SUBSET_TOTAL_ANI_DIST(samples, sketchlib_db_ch)
+    | GENERATE_TOTAL_DIST_MATRIX
+    | SUBSELECT_GRAPH
 
+    /*
     bin2channel
     | join(sample_metadata) //replace this with filtered metadata
     | map { join_accession, bin_info, subsampled_metadata ->
@@ -164,6 +168,7 @@ workflow {
     | join(read_ch)
     | PUBLISH_FASTQS
     
+    
     /*
     optional extras
     */
@@ -177,7 +182,7 @@ workflow {
 
     //build a core genome tree for all samples (requires extraction of assemblies)
     if (params.generate_tree) {
-        BUILD_TREE(filtered_cobs_matches, query_sketch)
+        BUILD_TREE(ready_cobs_matches, query_sketch)
     }
 }
 
