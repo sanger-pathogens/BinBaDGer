@@ -26,3 +26,22 @@ process DOWNLOAD_FASTQS {
             ${fastq_path_2}
     """
 }
+
+process PUBLISH_FASTQS {
+    tag "${meta.ID}"
+    label 'cpu_1'
+    label 'mem_100M'
+    label 'time_30m'
+
+    publishDir "${params.outdir}/${meta.ID}/fastqs", mode: 'copy', overwrite: true
+
+    input:
+    tuple val(meta), path(read_1), path(read_2)
+
+    output:
+    tuple val(meta), path(read_1), path(read_2), emit: fastqs
+
+    script:
+    """
+    """
+}

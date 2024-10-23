@@ -36,12 +36,10 @@ include { BIN_ANI_DISTANCES                                                     
 include { EXTRACT_ASSEMBLYS_FROM_TAR                                                                 } from './modules/extract_assembly.nf'
 include { COLLECT_FILE } from './modules/collect_file.nf'
 include { PLOT_ANI; SUBSELECT_GRAPH                                                                  } from './modules/plotting.nf'
-include { DOWNLOAD_FASTQS                                                                            } from './modules/stage_remote_fastqs.nf'
+include { DOWNLOAD_FASTQS; PUBLISH_FASTQS } from './modules/fastqs.nf'
 
 //from assorted-sub-workflows
 include { DOWNLOAD_METADATA                                                                          } from './assorted-sub-workflows/combined_input/modules/ena_downloader.nf'
-include { KRAKEN2BRACKEN                                                                             } from './assorted-sub-workflows/kraken2bracken/subworkflows/kraken2bracken.nf'
-include { FASTQC                                                                                     } from './assorted-sub-workflows/qc/modules/fastqc.nf'
 include { FILTER_METADATA                                                                            } from './assorted-sub-workflows/combined_input/modules/filter_metadata.nf'
 
 
@@ -51,6 +49,7 @@ include { FILTER_METADATA                                                       
 
 include { MANIFEST_PARSE } from './subworkflows/manifest_parse.nf'
 include { BUILD_TREE     } from './subworkflows/build_tree.nf'
+include { QC             } from './assorted-sub-workflows/qc/qc.nf'
 
 /*
 ========================================================================================
@@ -156,7 +155,14 @@ workflow {
     | set { read_ch }
 
     read_ch
-    | (KRAKEN2BRACKEN & FASTQC)
+    | QC
+    | filter { it[1] == 'pass' && it[2] == 'pass' }
+    | map { it -> it[0] } //only keep meta
+    | set { filtered_samples }
+
+    filtered_samples
+    | join(read_ch)
+    | PUBLISH_FASTQS
     
     /*
     optional extras
