@@ -167,6 +167,7 @@ workflow {
         filtered_samples
         | join(read_ch)
         | PUBLISH_FASTQS
+    }
     
     /*
     optional extras
