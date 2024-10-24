@@ -26,7 +26,7 @@ class ClusteringMethods:
 
         self.methods = {
             'kmeans': (kmeans_cluster, ['matrix'], []),
-            'heirarchy': (hierarchy_cluster, ['matrix', 'accessions'], []),
+            'hierarchy': (hierarchy_cluster, ['matrix', 'accessions'], []),
             'hdbscan': (umap_clustering, ['matrix'], []),
             'edge_based': (edge_based_cluster, ['matrix', 'accessions'], ['minimum_edge']),
             'network_based': (trim_network_to_n_nodes, ['matrix', 'accessions'], ['n_representatives', 'plot_selection_plots']),
@@ -468,7 +468,7 @@ def main():
     for method_name in selected_methods:
         result = clustering_methods.run_method(method_name)
 
-        if method_name in ['kmeans', 'heirarchy', 'hdbscan']:
+        if method_name in ['kmeans', 'hierarchy', 'hdbscan']:
             plot_umap(matrix, result, f'{method_name}_umap.png')
         else:
             save_representatives_to_file(result)
