@@ -26,7 +26,7 @@ process PLOT_TREE {
     label "mem_1"
     label "time_30m"
 
-    publishDir "${params.outdir}/tree/${meta.ID}", mode: 'copy', overwrite: true
+    publishDir "${params.outdir}/tree/${meta.ID}", pattern: '*.png', mode: 'copy', overwrite: true
 
     container 'quay.io/ssd28/experimental/rapidnj:2.3.2-c1'
 

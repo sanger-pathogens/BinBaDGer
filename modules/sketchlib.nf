@@ -120,7 +120,7 @@ process SKETCH_TREE {
     //this is all testing so using experimental repo
     container 'quay.io/ssd28/experimental/rapidnj:2.3.2-c1'
 
-    publishDir "${params.outdir}/tree/${meta.ID}", mode: 'copy', overwrite: true
+    publishDir "${params.outdir}/tree/${meta.ID}", pattern: '*.nwk', mode: 'copy', overwrite: true
 
     input:
     tuple val(meta), path(total_tsv)
@@ -141,8 +141,6 @@ process GENERATE_TOTAL_DIST_MATRIX {
     label "time_1"
 
     container 'quay.io/ssd28/experimental/rapidnj:2.3.2-c1'
-
-    publishDir "${params.outdir}/tree/${meta.reference_ID}", mode: 'copy', overwrite: true
 
     input:
     tuple val(meta), path(betweenness_tsv)

@@ -216,7 +216,7 @@ def trim_network_to_n_nodes(matrix, accessions, N=10, plot_seed=123, plot_iterat
             G.add_edge(accession_map[i], accession_map[j], weight=matrix[i, j])
 
     if len(G.nodes) <= N:
-        return
+        return {tuple(G.nodes): list(G.nodes)} #if there isn't enough to do the selection just return the nodes in the same structure as below
 
     # Sort edges by weight (shortest first)
     sorted_edges = sorted(G.edges(data=True), key=lambda x: x[2]['weight'])
