@@ -33,7 +33,7 @@ process PUBLISH_FASTQS {
     label 'mem_100M'
     label 'time_30m'
 
-    publishDir "${params.outdir}/${meta.ID}/fastqs", mode: 'copy', overwrite: true
+    publishDir "${params.outdir}/${meta.ref_ani_bin}/${meta.ID}/fastqs", mode: 'copy', overwrite: true
 
     input:
     tuple val(meta), path(read_1), path(read_2)
