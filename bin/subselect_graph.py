@@ -368,7 +368,7 @@ def plot_current_graph(G, iteration, plot_seed, show_edge_labels=False):
     plt.savefig(filename)
     plt.close()
 
-    return filename #we getting fancy
+    return filename
 
 
 ###### cluster emission functions ######
