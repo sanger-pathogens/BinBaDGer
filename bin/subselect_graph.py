@@ -429,7 +429,7 @@ def main():
     
     parser.add_argument('--methods', 
         nargs='+',
-        choices=['kmeans', 'heirarchy', 'hdbscan', 'edge_based', 'network_based', 'all'],
+        choices=['kmeans', 'hierarchy', 'hdbscan', 'edge_based', 'network_based', 'all'],
         required=True,
         help="method or methods to use for clustering"
     ),
