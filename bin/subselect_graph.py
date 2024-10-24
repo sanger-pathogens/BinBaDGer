@@ -29,7 +29,7 @@ class ClusteringMethods:
             'heirarchy': (hierarchy_cluster, ['matrix', 'accessions'], []),
             'hdbscan': (umap_clustering, ['matrix'], []),
             'edge_based': (edge_based_cluster, ['matrix', 'accessions'], ['minimum_edge']),
-            'network_based': (trim_network_to_n_nodes, ['matrix', 'accessions'], []),
+            'network_based': (trim_network_to_n_nodes, ['matrix', 'accessions'], ['n_representatives', 'plot_selection_plots']),
         }
 
     def run_method(self, method_name):
@@ -204,7 +204,7 @@ def edge_based_cluster(matrix, accessions, threshold, N=3, dissimilarity=True):
 
 ### Network trimming ###
 
-def trim_network_to_n_nodes(matrix, accessions, N=10, plot_seed=123, plot_iterations=True):
+def trim_network_to_n_nodes(matrix, accessions, N, plot_iterations, plot_seed=123, ):
     G = nx.Graph()
 
     num_nodes = len(matrix)
@@ -242,11 +242,10 @@ def trim_network_to_n_nodes(matrix, accessions, N=10, plot_seed=123, plot_iterat
         
         iteration += 1
     
-    plot_current_graph(trimmed_graph, iteration, plot_seed)
+    # Final plot
+    filename = plot_current_graph(trimmed_graph, iteration, plot_seed, show_edge_labels=True)
 
     if plot_iterations:
-        # Final plot
-        filename = plot_current_graph(trimmed_graph, iteration, plot_seed)
         filenames.append(filename)
         create_gif(filenames)
         # Clean up image files as we are saving gif
@@ -352,12 +351,16 @@ def plot_network_subclusters(clusters, G, representatives=None, plot_seed=123):
     plt.savefig('edge_network_with_highlighted_representatives.png')
     plt.close()
 
-def plot_current_graph(G, iteration, plot_seed):
+def plot_current_graph(G, iteration, plot_seed, show_edge_labels=False):
     pos = nx.spring_layout(G, seed=plot_seed)  # Layout for consistent graph drawing
     plt.figure(figsize=(8, 8))
     
     nx.draw(G, pos, with_labels=True, node_color='lightblue', edge_color='gray', 
             node_size=700, font_size=10, font_color='black')
+
+    if show_edge_labels:
+        edge_labels = {edge: f"{G.edges[edge]['weight']:.4f}" for edge in G.edges()}
+        nx.draw_networkx_edge_labels(G, pos, edge_labels=edge_labels, font_color='red')
 
     filename=(f'network_iteration_{iteration}.png')
     
@@ -437,6 +440,17 @@ def main():
         help="minimum_edge for bringing forward to network"
     ),
 
+    parser.add_argument('--n_representatives', 
+        type=int,
+        default=10,
+        help="number of representatives to select from network"
+    ),
+
+    parser.add_argument('--plot_selection_plots', 
+        action="store_true",
+        help="show plots for selection_method"
+    ),
+
     args = parser.parse_args()
 
     _, accessions, matrix = read_phylip_distance(args.phylip)
@@ -444,7 +458,9 @@ def main():
     clustering_methods = ClusteringMethods(
         matrix=matrix,
         accessions=accessions,
-        minimum_edge=args.minimum_edge
+        minimum_edge=args.minimum_edge,
+        n_representatives=args.n_representatives,
+        plot_selection_plots=args.plot_selection_plots,
     )
 
     selected_methods = clustering_methods.methods.keys() if 'all' in args.methods else args.methods

@@ -64,7 +64,9 @@ process SUBSELECT_GRAPH {
     path("*.gif"), optional: true
 
     script:
+    def make_gif = params.make_gif ? "--plot_selection_plots" : ""
+    def representatives = params.representatives ? "--n_representatives ${params.representatives}" : ""
     """
-    subselect_graph.py --phylip ${phylip} --methods ${params.cluster_method}
+    subselect_graph.py --phylip ${phylip} --methods ${params.cluster_method} ${make_gif} ${representatives}
     """
 }
