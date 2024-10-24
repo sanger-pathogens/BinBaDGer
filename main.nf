@@ -140,33 +140,40 @@ workflow {
         | GENERATE_TOTAL_DIST_MATRIX
         | SUBSELECT_GRAPH
 
-        bin2channel
-        | join(sample_metadata) //replace this with filtered metadata
-        | map { join_accession, bin_info, subsampled_metadata ->
-            def merged_meta = [:]
-            merged_meta = bin_info + subsampled_metadata
-            merged_meta.ID = join_accession
-            merged_meta
-        }
-        | filter { it.fastq_ftp.contains(';') } //if its paired its seperated by a semi-colon
-        | map{ merged_meta ->
-            def (read1_ftp, read2_ftp) = merged_meta.fastq_ftp.split(';')
-            def read1_ftp_url = "ftp://${read1_ftp}"
-            def read2_ftp_url = "ftp://${read2_ftp}"
-            [ merged_meta, read1_ftp_url, read2_ftp_url ]
-        }
-        | DOWNLOAD_FASTQS
-        | set { read_ch }
+        SUBSELECT_GRAPH.out.representatives
+        | splitCsv()
+        | set{ chosen_representatives }
 
-        read_ch
-        | QC
-        | filter { it[1] == 'pass' && it[2] == 'pass' }
-        | map { it -> it[0] } //only keep meta
-        | set { filtered_samples }
+        if (params.download_fastq) {
+            bin2channel
+            | join(chosen_representatives)
+            | join(sample_metadata) //replace this with filtered metadata
+            | map { join_accession, bin_info, subsampled_metadata ->
+                def merged_meta = [:]
+                merged_meta = bin_info + subsampled_metadata
+                merged_meta.ID = join_accession
+                merged_meta
+            }
+            | filter { it.fastq_ftp.contains(';') } //if its paired its seperated by a semi-colon
+            | map{ merged_meta ->
+                def (read1_ftp, read2_ftp) = merged_meta.fastq_ftp.split(';')
+                def read1_ftp_url = "ftp://${read1_ftp}"
+                def read2_ftp_url = "ftp://${read2_ftp}"
+                [ merged_meta, read1_ftp_url, read2_ftp_url ]
+            }
+            | DOWNLOAD_FASTQS
+            | set { read_ch }
 
-        filtered_samples
-        | join(read_ch)
-        | PUBLISH_FASTQS
+            read_ch
+            | QC
+            | filter { it[1] == 'pass' && it[2] == 'pass' }
+            | map { it -> it[0] } //only keep meta
+            | set { filtered_samples }
+
+            filtered_samples
+            | join(read_ch)
+            | PUBLISH_FASTQS
+        }
     }
     
     /*

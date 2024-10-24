@@ -15,6 +15,9 @@ from scipy.spatial.distance import squareform
 from scipy.cluster.hierarchy import linkage, fcluster, dendrogram
 from networkx.algorithms.community import greedy_modularity_communities
 
+import imageio
+import os
+
 ##### methods handling class #####
 
 class ClusteringMethods:
@@ -26,6 +29,7 @@ class ClusteringMethods:
             'heirarchy': (hierarchy_cluster, ['matrix', 'accessions'], []),
             'hdbscan': (umap_clustering, ['matrix'], []),
             'edge_based': (edge_based_cluster, ['matrix', 'accessions'], ['minimum_edge']),
+            'network_based': (trim_network_to_n_nodes, ['matrix', 'accessions'], []),
         }
 
     def run_method(self, method_name):
@@ -48,7 +52,6 @@ def read_phylip_distance(phylip_file):
 
         #might be useful
         num_samples = int(lines[0].strip())
-        print(f'Number of samples: {num_samples if num_samples else 1}')
 
         accessions = []
         matrix = []
@@ -137,8 +140,6 @@ def optimal_number_of_clusters(matrix, max_clusters=30):
         labels = kmeans.fit_predict(X_transformed)
         silhouette_avg = silhouette_score(X_transformed, labels)
         silhouette_scores.append(silhouette_avg)
-        print(f"For n_clusters = {n_clusters}, the silhouette score is {silhouette_avg:.4f}")
-    
     
     # Plot silhouette scores to visualize the optimal number of clusters
     plt.figure(figsize=(15, 9))
@@ -155,24 +156,107 @@ def optimal_number_of_clusters(matrix, max_clusters=30):
 
 ### edge_based ###
 
-def edge_based_cluster(matrix, accessions, threshold):
+def edge_based_cluster(matrix, accessions, threshold, N=3, dissimilarity=True):
     G = nx.Graph()
     
     num_nodes = len(matrix)
+
+    accession_map = {i: accessions[i] for i in range(num_nodes)}
     
     for i in range(num_nodes):
         for j in range(i + 1, num_nodes):
             if matrix[i, j] < threshold:
-                G.add_edge(i, j, weight=matrix[i, j])
+                G.add_edge(accession_map[i], accession_map[j], weight=matrix[i, j])
+
+    #as singletons don't get an edge above just save them at this stage
+    all_nodes = set(accession_map.values())
+    non_singletons = set(G.nodes())
+    singletons = all_nodes - non_singletons
     
     clusters = greedy_modularity_communities(G)
     
-    if clusters:
-        plot_network_subclusters(clusters, G)
-    else:
-        print('No clusters generated')
+    if not clusters and not singletons: #don't expect this really
+        raise Exception('No samples identified')
 
-    return clusters
+    combined_clusters = [list(cluster) for cluster in clusters]
+    
+    for singleton in singletons:
+        combined_clusters.append([singleton])
+    
+    representatives = {}
+    
+    # Loop through each cluster
+    for cluster in combined_clusters:
+        cluster = list(cluster)
+        
+        if len(cluster) >= N + 1:
+            # Compute degree centrality for large clusters
+            centrality = nx.degree_centrality(G.subgraph(cluster))
+            sorted_nodes = sorted(centrality, key=centrality.get, reverse=dissimilarity)
+            representatives[tuple(cluster)] = sorted_nodes[:N]
+        else:
+            # For smaller clusters, store all members
+            representatives[tuple(cluster)] = cluster
+    
+    plot_network_subclusters(representatives.keys(), G, representatives)
+    
+    return representatives
+
+### Network trimming ###
+
+def trim_network_to_n_nodes(matrix, accessions, N=10, plot_seed=123, plot_iterations=True):
+    G = nx.Graph()
+
+    num_nodes = len(matrix)
+
+    accession_map = {i: accessions[i] for i in range(num_nodes)}
+    
+    for i in range(num_nodes):
+        for j in range(i + 1, num_nodes):
+            G.add_edge(accession_map[i], accession_map[j], weight=matrix[i, j])
+
+    if len(G.nodes) <= N:
+        return
+
+    # Sort edges by weight (shortest first)
+    sorted_edges = sorted(G.edges(data=True), key=lambda x: x[2]['weight'])
+    
+    trimmed_graph = G.copy()
+    iteration = 0
+    filenames = []
+    
+    while len(trimmed_graph.nodes) > N:
+        if plot_iterations:
+            filename = plot_current_graph(trimmed_graph, iteration, plot_seed)
+            filenames.append(filename)
+        
+        # Get the shortest edge and remove one of its nodes
+        shortest_edge = sorted_edges.pop(0)
+        node_to_remove = shortest_edge[0] if trimmed_graph.degree(shortest_edge[0]) <= trimmed_graph.degree(shortest_edge[1]) else shortest_edge[1]
+        
+        # Remove the chosen node and its edges
+        trimmed_graph.remove_node(node_to_remove)
+        
+        # Remove edges related to the removed node from the sorted edge list
+        sorted_edges = [edge for edge in sorted_edges if node_to_remove not in edge[:2]]
+        
+        iteration += 1
+    
+    plot_current_graph(trimmed_graph, iteration, plot_seed)
+
+    if plot_iterations:
+        # Final plot
+        filename = plot_current_graph(trimmed_graph, iteration, plot_seed)
+        filenames.append(filename)
+        create_gif(filenames)
+        # Clean up image files as we are saving gif
+        for filename in filenames:
+            os.remove(filename)
+
+    clusters = list(nx.connected_components(trimmed_graph))
+    representatives = {tuple(cluster): list(cluster) for cluster in clusters}
+    
+    return representatives
 
 ### umap/HDBSCAN_based ###
 
@@ -224,10 +308,10 @@ def plot_umap(matrix, labels, output_file):
     plt.savefig(output_file)
     plt.close()
 
-def plot_network_subclusters(clusters, G):
+def plot_network_subclusters(clusters, G, representatives=None, plot_seed=123):
     num_clusters = len(clusters)
     
-    # Determine grid size
+    # Determine grid size for subplots
     grid_size = int(np.ceil(np.sqrt(num_clusters)))
     
     # Create subplots
@@ -239,23 +323,49 @@ def plot_network_subclusters(clusters, G):
     
     for idx, (cluster, ax) in enumerate(zip(clusters, axes)):
         subgraph = G.subgraph(cluster)
-        pos = nx.spring_layout(subgraph, seed=42 + idx)  # Different seed for each cluster for separation
+        pos = nx.spring_layout(subgraph, seed=plot_seed) # Might want to change the seed sometimes?
+        
+        node_colors = []
+        node_sizes = []
+        
+        for node in cluster:
+            if representatives and node in representatives[tuple(cluster)]:
+                node_colors.append('red')  # representatives in red
+                node_sizes.append(1000)
+            else:
+                node_colors.append(cluster_colors(idx))
+                node_sizes.append(500)
         
         # Draw the subgraph
-        nx.draw(subgraph, pos, with_labels=True, node_color=[cluster_colors(idx)] * len(cluster), 
-                edge_color=[cluster_colors(idx)] * len(subgraph.edges), node_size=500, font_size=10, 
-                font_color='white', ax=ax)
+        nx.draw(subgraph, pos, with_labels=True, node_color=node_colors, 
+                edge_color=[cluster_colors(idx)] * len(subgraph.edges), 
+                node_size=node_sizes, font_size=10, font_color='black', ax=ax)
         
         ax.set_title(f'Cluster {idx + 1}')
-        ax.axis('off')  # Turn off axis
+        ax.axis('off')
     
     # Hide any unused subplots
     for j in range(num_clusters, len(axes)):
         axes[j].axis('off')
     
     plt.tight_layout()
-    plt.savefig('edge_network.png')
+    plt.savefig('edge_network_with_highlighted_representatives.png')
     plt.close()
+
+def plot_current_graph(G, iteration, plot_seed):
+    pos = nx.spring_layout(G, seed=plot_seed)  # Layout for consistent graph drawing
+    plt.figure(figsize=(8, 8))
+    
+    nx.draw(G, pos, with_labels=True, node_color='lightblue', edge_color='gray', 
+            node_size=700, font_size=10, font_color='black')
+
+    filename=(f'network_iteration_{iteration}.png')
+    
+    plt.title(f"Iteration {iteration}: {len(G.nodes)} nodes remaining")
+    plt.savefig(filename)
+    plt.close()
+
+    return filename #we getting fancy
 
 
 ###### cluster emission functions ######
@@ -284,15 +394,27 @@ def select_closest_representatives(matrix, clusters, names, n_representatives=3)
    
     return representatives
 
-def relate_id_to_accession(clusters, accessions, output_file):
+def save_representatives_to_file(combined_clusters, output_file="representatives.txt"):
+    with open(output_file, 'w') as file:
+        for cluster, members in combined_clusters.items():
+            for member in members:
+                file.write(f"{member}\n")
+
+def relate_id_to_accession(clusters, accessions, output_file="representatives.txt"):
     cluster_dict = defaultdict(list)
     for idx, cluster in enumerate(clusters):
         cluster_dict[cluster].append(accessions[idx])
-        print(f'Cluster {idx + 1}: {sorted(cluster)}')
     
     with open(output_file, 'w') as out:
         for cluster, members in cluster_dict.items():
             out.write(f"cluster {cluster}: {', '.join(members)}\n")
+
+def create_gif(filenames, gif_filename='trimming_process.gif', duration=0.5):
+    """Creates a GIF from a list of image filenames."""
+    with imageio.get_writer(gif_filename, mode='I', duration=duration) as writer:
+        for filename in filenames:
+            image = imageio.imread(filename)
+            writer.append_data(image)
 
 def main():
     parser = argparse.ArgumentParser(description='subsample from a matrix')
@@ -304,14 +426,14 @@ def main():
     
     parser.add_argument('--methods', 
         nargs='+',
-        choices=['kmeans', 'heirarchy', 'hdbscan', 'edge_based', 'all'],
+        choices=['kmeans', 'heirarchy', 'hdbscan', 'edge_based', 'network_based', 'all'],
         required=True,
         help="method or methods to use for clustering"
     ),
 
     parser.add_argument('--minimum_edge', 
         type=float,
-        default=0.001,
+        default=0.01,
         help="minimum_edge for bringing forward to network"
     ),
 
@@ -333,10 +455,8 @@ def main():
         if method_name in ['kmeans', 'heirarchy', 'hdbscan']:
             plot_umap(matrix, result, f'{method_name}_umap.png')
         else:
-            relate_id_to_accession(result, accessions, "clusters.txt")
+            save_representatives_to_file(result)
 
-
-    #reps = select_closest_representatives(matrix, kmeans_labels, accessions, n_representatives=3)
 
 if __name__ == "__main__":
     main()
