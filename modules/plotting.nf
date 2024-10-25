@@ -50,7 +50,7 @@ process SUBSELECT_GRAPH {
 
     publishDir "${params.outdir}/clusters/${meta.reference_ID}/${meta.ref_ani_bin}", pattern: "*.png", mode: 'copy', overwrite: true
     publishDir "${params.outdir}/clusters/${meta.reference_ID}/${meta.ref_ani_bin}", pattern: "*.gif", mode: 'copy', overwrite: true
-
+    publishDir "${params.outdir}/clusters/${meta.reference_ID}/${meta.ref_ani_bin}", pattern: "*.txt", mode: 'copy', overwrite: true
 
     container 'quay.io/sangerpathogens/python_graphics:1.1.4'
 
