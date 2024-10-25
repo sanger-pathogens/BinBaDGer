@@ -14,9 +14,9 @@ NextflowTool.commandLineParams(workflow.commandLine, log, params.monochrome_logs
 
 
 def printHelp() {
-    NextflowTool.help_message("", 
-                               [],
-    params.monochrome_logs, log)
+    NextflowTool.help_message("${workflow.ProjectDir}/schema.json", 
+                            [],
+                            params.monochrome_logs, log)
 }
 
 /*
@@ -41,7 +41,7 @@ include { DOWNLOAD_FASTQS; PUBLISH_FASTQS } from './modules/fastqs.nf'
 //from assorted-sub-workflows
 include { DOWNLOAD_METADATA                                                                          } from './assorted-sub-workflows/combined_input/modules/ena_downloader.nf'
 include { FILTER_METADATA                                                                            } from './assorted-sub-workflows/combined_input/modules/filter_metadata.nf'
-
+include { METADATA                                                                                   } from './assorted-sub-workflows/irods_extractor/modules/metadata_save.nf'
 
 //
 // SUBWORKFLOWS
@@ -177,6 +177,14 @@ workflow {
         | filter { it[1] == 'pass' && it[2] == 'pass' }
         | map { it -> it[0] } //only keep meta
         | set { filtered_samples }
+
+        filtered_samples
+        | collectFile() { map -> [ "lane_metadata.txt", map.collect{it}.join(', ') + '\n' ] }
+        | set{ metadata_only }
+        
+        metadata_tag = channel.value("chosen_samples")
+
+        METADATA(metadata_only, metadata_tag)
 
         filtered_samples
         | join(read_ch)
