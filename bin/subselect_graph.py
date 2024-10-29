@@ -29,7 +29,7 @@ class ClusteringMethods:
             'hierarchy': (hierarchy_cluster, ['matrix', 'accessions'], []),
             'hdbscan': (umap_clustering, ['matrix'], []),
             'edge_based': (edge_based_cluster, ['matrix', 'accessions'], ['minimum_edge']),
-            'network_based': (trim_network_to_n_nodes, ['matrix', 'accessions'], ['n_representatives', 'plot_selection_plots']),
+            'network_based': (build_network_to_n_nodes, ['matrix', 'accessions'], ['n_representatives', 'plot_selection_plots']),
         }
 
     def run_method(self, method_name):
@@ -204,7 +204,86 @@ def edge_based_cluster(matrix, accessions, threshold, N=3, dissimilarity=True):
 
 ### Network trimming ###
 
-def trim_network_to_n_nodes(matrix, accessions, N, plot_iterations, plot_seed=123, ):
+def get_edges_to_subgraph(G, node, subgraph_nodes):
+    """
+    Get the edges from a given node to every node in a subgraph.
+
+    Parameters:
+    G (networkx.Graph): The original graph.
+    node (int or str): The node from which edges are to be found.
+    subgraph_nodes (list): A list of nodes representing the subgraph.
+
+    Returns:
+    list: A list of edges from the given node to nodes in the subgraph.
+    """
+    edges = []
+    
+    # Iterate over each node in the subgraph
+    for target_node in subgraph_nodes:
+        if G.has_edge(node, target_node):
+            # Get the edge data (attributes) if they exist
+            edge_data = G.get_edge_data(node, target_node)
+            edges.append((node, target_node, edge_data))
+    
+    return edges
+
+
+def get_next_graph(original_graph, current_graph):
+    new_graph = current_graph.copy()
+
+    candidate_nodes = [node for node in original_graph.nodes() if node not in new_graph.nodes]
+    candidate_nodes_weight_sum = {}
+    for candidate_node in candidate_nodes:
+        #TODO Should we store the below to save computing again for max_weight?
+        candidate_node_edges = get_edges_to_subgraph(original_graph, candidate_node, new_graph.nodes)
+        total_weight = sum(edge[2]["weight"] for edge in candidate_node_edges)
+        candidate_nodes_weight_sum[candidate_node] = total_weight
+    
+    # Node to add is the node that maximises weights of graph edges
+    node_to_add = max(candidate_nodes_weight_sum, key=candidate_nodes_weight_sum.get)
+    max_weight_node_edges = get_edges_to_subgraph(original_graph, node_to_add, new_graph.nodes)
+
+    for edge in max_weight_node_edges:
+        new_graph.add_edge(edge[0], edge[1], **edge[2])
+
+    return new_graph
+        
+
+def build_n_representatives(original_graph, N, seed_edge=None, current_graph=None, visited_nodes=None):
+    if seed_edge is None:
+        # Choose longest edge to be seed
+        sorted_edges = sorted(original_graph.edges(data=True), key=lambda x: x[2]['weight'])
+        seed_edge = sorted_edges[-1]
+    if current_graph is None:
+        current_graph = nx.Graph()
+        current_graph.add_edge(seed_edge[0], seed_edge[1], **seed_edge[2])
+    if visited_nodes is None:
+        # To ensure we only look at new nodes in growing graph
+        visited_nodes = set()
+    if len(current_graph.nodes) >= N:
+        # When we have the desired number of representatives, return the graph
+        return current_graph
+    
+    for current_node in current_graph.nodes:
+        if current_node not in visited_nodes:
+            new_graph = current_graph.copy()
+            candidate_nodes = [node for node in original_graph.nodes() if node not in current_graph.nodes]
+            candidate_nodes_weight_sum = {}
+            for candidate_node in candidate_nodes:
+                #TODO Should we store the below to save computing again for max_weight?
+                candidate_node_edges = get_edges_to_subgraph(original_graph, candidate_node, current_graph.nodes)
+                total_weight = sum(edge[2]["weight"] for edge in candidate_node_edges)
+                candidate_nodes_weight_sum[candidate_node] = total_weight
+            max_weight_node = max(candidate_nodes_weight_sum, key=candidate_nodes_weight_sum.get)
+            max_weight_node_edges = get_edges_to_subgraph(original_graph, max_weight_node, current_graph.nodes)
+            for edge in max_weight_node_edges:
+                new_graph.add_edge(edge[0], edge[1], **edge[2])
+            visited_nodes.add(current_node)
+    
+            return build_n_representatives(original_graph, N, seed_edge, new_graph, visited_nodes)
+
+
+def build_network(matrix, accessions) -> nx.Graph:
     G = nx.Graph()
 
     num_nodes = len(matrix)
@@ -214,6 +293,57 @@ def trim_network_to_n_nodes(matrix, accessions, N, plot_iterations, plot_seed=12
     for i in range(num_nodes):
         for j in range(i + 1, num_nodes):
             G.add_edge(accession_map[i], accession_map[j], weight=matrix[i, j])
+    
+    return G
+
+
+def build_network_to_n_nodes(matrix, accessions, N, plot_iterations=True, plot_seed=123):
+    # Build complete graph
+    complete_graph = build_network(matrix, accessions)
+
+    seed_edge=None  #TODO Work out how to add this as as PARAM!!!
+    if seed_edge is None:
+        # Choose longest edge to be seed
+        sorted_edges = sorted(complete_graph.edges(data=True), key=lambda x: x[2]['weight'])
+        seed_edge = sorted_edges[-1]
+    current_graph = nx.Graph()
+    current_graph.add_edge(seed_edge[0], seed_edge[1], **seed_edge[2])
+
+    # If we have enough nodes return in same structure as below
+    if len(current_graph.nodes) >= N:
+        return {tuple(current_graph.nodes): list(current_graph.nodes)}
+
+    iteration = 0
+    filenames = []
+    while len(current_graph.nodes) < N:
+        if plot_iterations:
+            filename = plot_current_graph(current_graph, iteration, plot_seed, show_edge_labels=False)
+            filenames.append(filename)
+        current_graph = get_next_graph(complete_graph, current_graph)
+
+        iteration += 1
+
+    # Final plot
+    filename = plot_current_graph(current_graph, iteration, plot_seed, show_edge_labels=True)
+
+    # Create gif
+    if plot_iterations:
+        filenames.append(filename)
+        create_gif(filenames, duration=1000 // len(filenames))
+        # Clean up image files as we are saving gif
+        for filename in filenames:
+            os.remove(filename)
+
+    # Get representatives
+    clusters = list(nx.connected_components(current_graph))
+    representatives = {tuple(cluster): list(cluster) for cluster in clusters}
+    
+    return representatives
+
+
+def trim_network_to_n_nodes(matrix, accessions, N, plot_iterations=True, plot_seed=123):
+    # Build complete network
+    G = build_network(matrix, accessions)
 
     if len(G.nodes) <= N:
         plot_current_graph(G, 0, plot_seed, show_edge_labels=True)
@@ -221,7 +351,7 @@ def trim_network_to_n_nodes(matrix, accessions, N, plot_iterations, plot_seed=12
 
     # Sort edges by weight (shortest first)
     sorted_edges = sorted(G.edges(data=True), key=lambda x: x[2]['weight'])
-    
+
     trimmed_graph = G.copy()
     iteration = 0
     filenames = []
@@ -353,6 +483,7 @@ def plot_network_subclusters(clusters, G, representatives=None, plot_seed=123):
     plt.close()
 
 def plot_current_graph(G, iteration, plot_seed, show_edge_labels=False):
+    # print(G)
     pos = nx.spring_layout(G, seed=plot_seed)  # use spring layout for consistent graph drawing
     plt.figure(figsize=(8, 8))
     
