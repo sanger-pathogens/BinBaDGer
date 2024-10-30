@@ -67,7 +67,7 @@ workflow {
     set up channels for species cobs channel and assembly channels
     */
 
-    channel.fromPath( "${params.cobs_base}/${params.species}*.xz" )
+    channel.fromPath( "${params.cobs_base}/${params.index_prefix}*.xz" )
     | set {species_cobs_ch}
 
     channel.fromFilePairs( "${params.sketchlib_db}.{skd,skm}" )
