@@ -2,17 +2,13 @@
     "pipeline": "Additional Pipeline Options",
     "params": {
       "Metadata options": {
-        "accession_type": {
-          "default": "sample",
-          "help_text": "Type of accession for metadata."
-        },
         "publish_metadata": {
           "default": false,
-          "help_text": "Flag to publish metadata."
+          "help_text": "Flag to publish full metadata TSV."
         },
         "filter_manifest": {
           "default": "",
-          "help_text": "Path to filter manifest file."
+          "help_text": "Path to filter manifest file for filtering samples on metadata."
         }
       },
       "Output options": {
@@ -22,11 +18,11 @@
         },
         "manifest": {
           "default": "",
-          "help_text": "Path to the manifest file."
+          "help_text": "Path to the reference manifest file."
         },
         "assembly_base": {
           "default": "/data/pam/collections/all_the_bacteria/0.2/assembly/",
-          "help_text": "Base directory for assembly files."
+          "help_text": "Base directory for assembly files required for tree building."
         },
         "cobs_base": {
           "default": "/data/pam/collections/all_the_bacteria/0.2/indexes/phylign",
@@ -34,7 +30,7 @@
         },
         "cobs_threshold": {
           "default": 0.8,
-          "help_text": "Default threshold for COBS."
+          "help_text": "Coverage threshold for COBS search."
         },
         "selection_method": {
           "default": "top",
@@ -46,11 +42,11 @@
         },
         "index_prefix": {
           "default": "",
-          "help_text": "limit the cobs search to indexes that have this prefix"
+          "help_text": "Limit the COBS search to indexes that have this prefix"
         },
         "samples": {
           "default": 1000,
-          "help_text": "Set initial sample size to return all results."
+          "help_text": "Number of matches to return from COBS search."
         },
         "generate_tree": {
           "default": false,
@@ -58,7 +54,7 @@
         },
         "trim_tree": {
           "default": false,
-          "help_text": "Use Treemer to subset the tree."
+          "help_text": "Use Treemmer to subset the tree."
         },
         "number_of_leaves": {
           "default": 10,
@@ -70,19 +66,19 @@
         },
         "cluster_method": {
           "default": "network_based",
-          "help_text": "Clustering method to use for samples."
+          "help_text": "Clustering method to use for samples in each bin; options are network_based or edge_based."
         },
         "representatives": {
           "default": 10,
-          "help_text": "Number of representatives to select."
+          "help_text": "Number of representatives to select from each bin."
         },
         "make_gif": {
           "default": false,
-          "help_text": "Flag to create GIF visualization for choosing representatives."
+          "help_text": "Flag to create GIF visualization for choosing representatives when using network_based clustering method."
         },
         "download_fastq": {
           "default": false,
-          "help_text": "Download FastQ files if available."
+          "help_text": "Download FastQ files for samples (if available) and run QC."
         },
         "output_all_fastqs": {
           "default": false,
