@@ -2,10 +2,6 @@
     "pipeline": "Additional Pipeline Options",
     "params": {
       "Metadata options": {
-        "accession_type": {
-          "default": "sample",
-          "help_text": "Type of accession for metadata."
-        },
         "publish_metadata": {
           "default": false,
           "help_text": "Flag to publish full metadata TSV."
