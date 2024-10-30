@@ -1,0 +1,114 @@
+{
+    "pipeline": "Additional Pipeline Options",
+    "params": {
+      "Metadata options": {
+        "accession_type": {
+          "default": "sample",
+          "help_text": "Type of accession for metadata."
+        },
+        "publish_metadata": {
+          "default": false,
+          "help_text": "Flag to publish metadata."
+        },
+        "filter_manifest": {
+          "default": "",
+          "help_text": "Path to filter manifest file."
+        }
+      },
+      "Output options": {
+        "outdir": {
+          "default": "./results",
+          "help_text": "Directory to save results."
+        },
+        "manifest": {
+          "default": "",
+          "help_text": "Path to the manifest file."
+        },
+        "assembly_base": {
+          "default": "/data/pam/collections/all_the_bacteria/0.2/assembly/",
+          "help_text": "Base directory for assembly files."
+        },
+        "cobs_base": {
+          "default": "/data/pam/collections/all_the_bacteria/0.2/indexes/phylign",
+          "help_text": "Base directory for COBS indexes."
+        },
+        "cobs_threshold": {
+          "default": 0.8,
+          "help_text": "Default threshold for COBS."
+        },
+        "selection_method": {
+          "default": "top",
+          "help_text": "Method for sample selection; options are stepwise, random, or top."
+        },
+        "sketchlib_db": {
+          "default": "/data/pam/collections/all_the_bacteria/0.2/indexes/sketchlib/atb_sketchlib_v020",
+          "help_text": "Path to the Sketchlib database."
+        },
+        "species": {
+          "default": "",
+          "help_text": "Specify the species of interest to limit cobs search to."
+        },
+        "samples": {
+          "default": 1000,
+          "help_text": "Set initial sample size to return all results."
+        },
+        "generate_tree": {
+          "default": false,
+          "help_text": "Generate a tree with RapidNJ."
+        },
+        "trim_tree": {
+          "default": false,
+          "help_text": "Use Treemer to subset the tree."
+        },
+        "number_of_leaves": {
+          "default": 10,
+          "help_text": "Number of leaves to retain if trimming the tree."
+        },
+        "decreplicate_bins": {
+          "default": true,
+          "help_text": "Flag to decreplicate bins."
+        },
+        "cluster_method": {
+          "default": "network_based",
+          "help_text": "Clustering method to use for samples."
+        },
+        "representatives": {
+          "default": 10,
+          "help_text": "Number of representatives to select."
+        },
+        "make_gif": {
+          "default": false,
+          "help_text": "Flag to create GIF visualization for choosing representatives."
+        },
+        "download_fastq": {
+          "default": false,
+          "help_text": "Download FastQ files if available."
+        },
+        "output_all_fastqs": {
+          "default": false,
+          "help_text": "Output all downloaded FastQ files regardless of QC."
+        },
+        "short_metacsv_name": {
+          "default": true,
+          "help_text": "Use a short name for the metadata CSV file."
+        },
+        "lexicmap_db": {
+          "default": "/data/pam/collections/all_the_bacteria/0.2/indexes/lexicmap/metadata/atb_hq.lmi",
+          "help_text": "Path to the Lexicmap database."
+        }
+      },
+      "QC options": {
+        "save_fastqc": {
+          "default": true,
+          "help_text": "Flag to save FastQC output files."
+        }
+      },
+      "Logging options": {
+        "monochrome_logs": {
+          "default": false,
+          "help_text": "Display logs in monochrome mode."
+        }
+      }
+    }
+  }
+  
