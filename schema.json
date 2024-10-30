@@ -44,9 +44,9 @@
           "default": "/data/pam/collections/all_the_bacteria/0.2/indexes/sketchlib/atb_sketchlib_v020",
           "help_text": "Path to the Sketchlib database."
         },
-        "species": {
+        "index_prefix": {
           "default": "",
-          "help_text": "Specify the species of interest to limit cobs search to."
+          "help_text": "limit the cobs search to indexes that have this prefix"
         },
         "samples": {
           "default": 1000,
