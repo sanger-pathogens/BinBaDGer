@@ -483,7 +483,6 @@ def plot_network_subclusters(clusters, G, representatives=None, plot_seed=123):
     plt.close()
 
 def plot_current_graph(G, iteration, plot_seed, show_edge_labels=False):
-    # print(G)
     pos = nx.spring_layout(G, seed=plot_seed)  # use spring layout for consistent graph drawing
     plt.figure(figsize=(8, 8))
     
