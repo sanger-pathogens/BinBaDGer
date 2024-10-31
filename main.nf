@@ -129,7 +129,7 @@ workflow {
     }
     | set{ bin2channel }
 
-    if ( params.decreplicate_bins ) {
+    if ( params.dereplicate_bins ) {
         //for this method we need all vs all ANI
         bin2channel
         | groupTuple(by: 1)
