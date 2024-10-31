@@ -5,7 +5,7 @@ import argparse
 
 def bin_similarities(df, bins, bin_labels):
     """bins the ani values in the DataFrame."""
-    df['ref_ani_bin'] = pd.cut(df['ani'], bins=bins, labels=bin_labels)
+    df['ref_ani_bin'] = pd.cut(df['ani'], bins=bins, labels=bin_labels, include_lowest=False)
     return df
 
 def read_tsv(file_path):
@@ -27,23 +27,30 @@ def split_bin_list(input_string):
     """Parses a comma-separated string into a list of floats."""
     return list(map(float, input_string.split(',')))
 
-def generate_labels(bins):
+def generate_labels(bins, allow_outsiders):
     """Generates percentage-based range labels from bins."""
     labels = []
     for i in range(len(bins) - 1):
         start = round((1 - bins[i]) * 100, 1)
         end = round((1 - bins[i + 1]) * 100, 1)
         labels.append(f"{start}-{end}%")
+
     return labels
 
-def main(input_tsv, output_tsv, bin_string, n):
+def main(input_tsv, output_tsv, bin_string, n, allow_outsiders):
     bins = split_bin_list(bin_string)
+
+    if allow_outsiders: #add a lower range to catch all
+        bins = [0.0] + bins
     
-    bin_labels = generate_labels(bins)
+    bin_labels = generate_labels(bins, allow_outsiders)
     
     df = read_tsv(input_tsv)
     
     df = bin_similarities(df, bins, bin_labels)
+
+    # Remove rows with unassigned categories
+    df = df.dropna(subset=['ref_ani_bin'])
 
     if n:
         df = sample_from_bins(df, n)
@@ -56,7 +63,8 @@ if __name__ == "__main__":
     parser.add_argument("--output_tsv", required=True, help="Path to save output binned tsv")
     parser.add_argument("-n", type=int, help="Number of QUERY entries to sample from each bin")
     parser.add_argument("--bins", type=str, default='0.80,0.95,0.99,0.995,0.998,1', help="Comma-separated list of bin edges, e.g., '0.98,0.99,0.995,0.998,1'.")
+    parser.add_argument("--assign_outsiders", action='store_true', help="add a new bin to the lower side to catch those which fall below the lowest edge")
     
     args = parser.parse_args()
     
-    main(args.input_tsv, args.output_tsv, args.bins, args.n)
+    main(args.input_tsv, args.output_tsv, args.bins, args.n, args.assign_outsiders)

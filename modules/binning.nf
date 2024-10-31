@@ -15,7 +15,8 @@ process BIN_ANI_DISTANCES {
     tuple val(meta), path("${meta.ID}_binned.tsv"), emit: binned_ani
 
     script:
+    retain_below_bins = params.retain_below_bins ? '--assign_outsiders' : ''
     """
-    bin_ani.py --input_tsv ${ani_tsv} --output_tsv ${meta.ID}_binned.tsv --bins ${params.bin_ranges}
+    bin_ani.py --input_tsv ${ani_tsv} --output_tsv ${meta.ID}_binned.tsv --bins ${params.bin_ranges} ${retain_below_bins}
     """
 }
