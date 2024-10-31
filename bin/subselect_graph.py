@@ -29,7 +29,8 @@ class ClusteringMethods:
             'hierarchy': (hierarchy_cluster, ['matrix', 'accessions'], []),
             'hdbscan': (umap_clustering, ['matrix'], []),
             'edge_based': (edge_based_cluster, ['matrix', 'accessions'], ['minimum_edge']),
-            'network_based': (build_network_to_n_nodes, ['matrix', 'accessions', 'n_representatives'], ['seed_edge', 'plot_selection_plots']),
+            'network_based_trim': (trim_network_to_n_nodes, ['matrix', 'accessions', 'n_representatives'], ['plot_selection_plots']),
+            'network_based_build': (build_network_to_n_nodes, ['matrix', 'accessions', 'n_representatives'], ['seed_edge', 'plot_selection_plots']),
         }
 
     def run_method(self, method_name):
