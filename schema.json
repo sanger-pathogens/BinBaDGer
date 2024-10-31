@@ -60,9 +60,9 @@
           "default": 10,
           "help_text": "Number of leaves to retain if trimming the tree."
         },
-        "decreplicate_bins": {
+        "dereplicate_bins": {
           "default": true,
-          "help_text": "Flag to decreplicate bins."
+          "help_text": "Flag to dereplicate bins."
         },
         "cluster_method": {
           "default": "network_based",
@@ -107,4 +107,4 @@
       }
     }
   }
-  
+
