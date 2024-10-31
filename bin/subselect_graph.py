@@ -247,40 +247,6 @@ def get_next_graph(original_graph, current_graph):
         new_graph.add_edge(edge[0], edge[1], **edge[2])
 
     return new_graph
-        
-
-def build_n_representatives(original_graph, N, seed_edge=None, current_graph=None, visited_nodes=None):
-    if seed_edge is None:
-        # Choose longest edge to be seed
-        sorted_edges = sorted(original_graph.edges(data=True), key=lambda x: x[2]['weight'])
-        seed_edge = sorted_edges[-1]
-    if current_graph is None:
-        current_graph = nx.Graph()
-        current_graph.add_edge(seed_edge[0], seed_edge[1], **seed_edge[2])
-    if visited_nodes is None:
-        # To ensure we only look at new nodes in growing graph
-        visited_nodes = set()
-    if len(current_graph.nodes) >= N:
-        # When we have the desired number of representatives, return the graph
-        return current_graph
-    
-    for current_node in current_graph.nodes:
-        if current_node not in visited_nodes:
-            new_graph = current_graph.copy()
-            candidate_nodes = [node for node in original_graph.nodes() if node not in current_graph.nodes]
-            candidate_nodes_weight_sum = {}
-            for candidate_node in candidate_nodes:
-                #TODO Should we store the below to save computing again for max_weight?
-                candidate_node_edges = get_edges_to_subgraph(original_graph, candidate_node, current_graph.nodes)
-                total_weight = sum(edge[2]["weight"] for edge in candidate_node_edges)
-                candidate_nodes_weight_sum[candidate_node] = total_weight
-            max_weight_node = max(candidate_nodes_weight_sum, key=candidate_nodes_weight_sum.get)
-            max_weight_node_edges = get_edges_to_subgraph(original_graph, max_weight_node, current_graph.nodes)
-            for edge in max_weight_node_edges:
-                new_graph.add_edge(edge[0], edge[1], **edge[2])
-            visited_nodes.add(current_node)
-    
-            return build_n_representatives(original_graph, N, seed_edge, new_graph, visited_nodes)
 
 
 def build_network(matrix, accessions) -> nx.Graph:
