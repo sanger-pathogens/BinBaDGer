@@ -37,6 +37,6 @@ process POSTPROCESS_COBS {
 
     script:
     """
-    postprocess_cobs.py --selection_method ${params.selection_method} --seed 1234 -n ${params.samples} ${matches}
+    postprocess_cobs.py --selection_method ${params.selection_method} --seed 1234 -n ${params.number_of_cobs_matches} ${matches}
     """
 }

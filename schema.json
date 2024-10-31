@@ -3,7 +3,7 @@
     "params": {
       "manifest": {
           "default": "",
-          "help_text": "Path to the reference manifest file."
+          "help_text": "Path to the reference manifest CSV."
       },
       "COBS search options": {
         "cobs_base": {
@@ -20,11 +20,11 @@
         },
         "index_prefix": {
           "default": "",
-          "help_text": "Limit the COBS search to indexes that have this prefix"
+          "help_text": "Limit the COBS search to indexes that have this prefix, also restricts prefix of TAR files when extracting assemblies for tree building"
         },
-        "samples": {
-          "default": 1000,
-          "help_text": "Number of matches to return from COBS search."
+        "number_of_cobs_matches": {
+          "default": 100000,
+          "help_text": "Number of matches to limit COBS search to."
         }
       },
       "Metadata options": {
@@ -34,11 +34,11 @@
         },
         "filter_manifest": {
           "default": "",
-          "help_text": "Path to filter manifest file for filtering samples on metadata."
+          "help_text": "Path to filter manifest TSV for filtering samples on metadata."
         },
         "short_metacsv_name": {
           "default": true,
-          "help_text": "Use a short name for the metadata CSV file."
+          "help_text": "Remove full timestamp from filtered metadata CSV filename."
         }
       },
       "Sketching options": {
@@ -74,7 +74,7 @@
       "Tree building options": {
         "assembly_base": {
           "default": "/data/pam/collections/all_the_bacteria/0.2/assembly/",
-          "help_text": "Base directory for assembly files required for tree building."
+          "help_text": "Base directory for xz-compressed TAR files containing assembly FASTAs, required for tree building"
         },
         "generate_tree": {
           "default": false,
