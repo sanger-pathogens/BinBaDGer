@@ -29,7 +29,7 @@ class ClusteringMethods:
             'hierarchy': (hierarchy_cluster, ['matrix', 'accessions'], []),
             'hdbscan': (umap_clustering, ['matrix'], []),
             'edge_based': (edge_based_cluster, ['matrix', 'accessions'], ['minimum_edge']),
-            'network_based': (build_network_to_n_nodes, ['matrix', 'accessions'], ['n_representatives', 'plot_selection_plots']),
+            'network_based': (build_network_to_n_nodes, ['matrix', 'accessions', 'n_representatives'], ['seed_edge', 'plot_selection_plots']),
         }
 
     def run_method(self, method_name):
@@ -263,11 +263,10 @@ def build_network(matrix, accessions) -> nx.Graph:
     return G
 
 
-def build_network_to_n_nodes(matrix, accessions, N, plot_iterations=True, plot_seed=123):
+def build_network_to_n_nodes(matrix, accessions, N, seed_edge=None, plot_iterations=True, plot_seed=123):
     # Build complete graph
     complete_graph = build_network(matrix, accessions)
 
-    seed_edge=None  #TODO Work out how to add this as as PARAM!!!
     if seed_edge is None:
         # Choose longest edge to be seed
         sorted_edges = sorted(complete_graph.edges(data=True), key=lambda x: x[2]['weight'])
@@ -558,6 +557,7 @@ def main():
         minimum_edge=args.minimum_edge,
         n_representatives=args.n_representatives,
         plot_selection_plots=args.plot_selection_plots,
+        seed_edge=None
     )
 
     selected_methods = clustering_methods.methods.keys() if 'all' in args.methods else args.methods
