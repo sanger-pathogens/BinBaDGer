@@ -44,9 +44,9 @@
           "default": "",
           "help_text": "Limit the COBS search to indexes that have this prefix"
         },
-        "samples": {
+        "number_of_cobs_matches": {
           "default": 1000,
-          "help_text": "Number of matches to return from COBS search."
+          "help_text": "Number of matches to limit cobs search to."
         },
         "generate_tree": {
           "default": false,
