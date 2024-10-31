@@ -34,7 +34,7 @@ class ClusteringMethods:
 
     def run_method(self, method_name):
         method, required_args, optional_args = self.methods[method_name]
-        
+
         missing_args = [arg for arg in required_args if arg not in self.context]
         if missing_args:
             raise ValueError(f"Missing required arguments for '{method_name}': {', '.join(missing_args)}")
@@ -78,18 +78,18 @@ def hierarchy_cluster(matrix, accessions, num_clusters=3, plot_clusters=True, me
 
     if plot_clusters:
         plot_dendogram(Z, accessions, 'dendogram.png')
-    
+
     return clusters
 
 def plot_dendogram(Z, accessions, output_file):
     plt.figure(figsize=(15, 9))
     dendrogram(Z, labels=accessions, leaf_font_size=5, orientation='left')
-    
+
     plt.title("Dendrogram of Hierarchical Clustering")
     plt.ylabel("Accessions")
     plt.xlabel("Distance")
     plt.tight_layout()
-    
+
     # Save the plot as a PNG file
     plt.savefig(output_file)
     plt.close()
@@ -134,13 +134,13 @@ def optimal_number_of_clusters(matrix, max_clusters=30):
     mds = MDS(n_components=2, dissimilarity="precomputed", random_state=42)
     X_transformed = mds.fit_transform(matrix)
     silhouette_scores = []
-    
+
     for n_clusters in range(2, max_clusters + 1):
         kmeans = KMeans(n_clusters=n_clusters, random_state=42)
         labels = kmeans.fit_predict(X_transformed)
         silhouette_avg = silhouette_score(X_transformed, labels)
         silhouette_scores.append(silhouette_avg)
-    
+
     # Plot silhouette scores to visualize the optimal number of clusters
     plt.figure(figsize=(15, 9))
     plt.plot(range(2, max_clusters + 1), silhouette_scores, marker='o')
@@ -158,11 +158,11 @@ def optimal_number_of_clusters(matrix, max_clusters=30):
 
 def edge_based_cluster(matrix, accessions, threshold, N=3, dissimilarity=True):
     G = nx.Graph()
-    
+
     num_nodes = len(matrix)
 
     accession_map = {i: accessions[i] for i in range(num_nodes)}
-    
+
     for i in range(num_nodes):
         for j in range(i + 1, num_nodes):
             if matrix[i, j] < threshold:
@@ -172,23 +172,23 @@ def edge_based_cluster(matrix, accessions, threshold, N=3, dissimilarity=True):
     all_nodes = set(accession_map.values())
     non_singletons = set(G.nodes())
     singletons = all_nodes - non_singletons
-    
+
     clusters = greedy_modularity_communities(G)
-    
+
     if not clusters and not singletons: #don't expect this really
         raise Exception('No samples identified')
 
     combined_clusters = [list(cluster) for cluster in clusters]
-    
+
     for singleton in singletons:
         combined_clusters.append([singleton])
-    
+
     representatives = {}
-    
+
     # Loop through each cluster
     for cluster in combined_clusters:
         cluster = list(cluster)
-        
+
         if len(cluster) >= N + 1:
             # Compute degree centrality for large clusters
             centrality = nx.degree_centrality(G.subgraph(cluster))
@@ -197,9 +197,9 @@ def edge_based_cluster(matrix, accessions, threshold, N=3, dissimilarity=True):
         else:
             # For smaller clusters, store all members
             representatives[tuple(cluster)] = cluster
-    
+
     plot_network_subclusters(representatives.keys(), G, representatives)
-    
+
     return representatives
 
 ### Network trimming ###
@@ -217,14 +217,14 @@ def get_edges_to_subgraph(G, node, subgraph_nodes):
     list: A list of edges from the given node to nodes in the subgraph.
     """
     edges = []
-    
+
     # Iterate over each node in the subgraph
     for target_node in subgraph_nodes:
         if G.has_edge(node, target_node):
             # Get the edge data (attributes) if they exist
             edge_data = G.get_edge_data(node, target_node)
             edges.append((node, target_node, edge_data))
-    
+
     return edges
 
 
@@ -238,7 +238,7 @@ def get_next_graph(original_graph, current_graph):
         candidate_node_edges = get_edges_to_subgraph(original_graph, candidate_node, new_graph.nodes)
         total_weight = sum(edge[2]["weight"] for edge in candidate_node_edges)
         candidate_nodes_weight_sum[candidate_node] = total_weight
-    
+
     # Node to add is the node that maximises weights of graph edges
     node_to_add = max(candidate_nodes_weight_sum, key=candidate_nodes_weight_sum.get)
     max_weight_node_edges = get_edges_to_subgraph(original_graph, node_to_add, new_graph.nodes)
@@ -255,11 +255,11 @@ def build_network(matrix, accessions) -> nx.Graph:
     num_nodes = len(matrix)
 
     accession_map = {i: accessions[i] for i in range(num_nodes)}
-    
+
     for i in range(num_nodes):
         for j in range(i + 1, num_nodes):
             G.add_edge(accession_map[i], accession_map[j], weight=matrix[i, j])
-    
+
     return G
 
 
@@ -303,7 +303,7 @@ def build_network_to_n_nodes(matrix, accessions, N, plot_iterations=True, plot_s
     # Get representatives
     clusters = list(nx.connected_components(current_graph))
     representatives = {tuple(cluster): list(cluster) for cluster in clusters}
-    
+
     return representatives
 
 
@@ -321,24 +321,24 @@ def trim_network_to_n_nodes(matrix, accessions, N, plot_iterations=True, plot_se
     trimmed_graph = G.copy()
     iteration = 0
     filenames = []
-    
+
     while len(trimmed_graph.nodes) > N:
         if plot_iterations:
             filename = plot_current_graph(trimmed_graph, iteration, plot_seed)
             filenames.append(filename)
-        
+
         # Get the shortest edge and remove one of its nodes
         shortest_edge = sorted_edges.pop(0)
         node_to_remove = shortest_edge[0] if trimmed_graph.degree(shortest_edge[0]) <= trimmed_graph.degree(shortest_edge[1]) else shortest_edge[1]
-        
+
         # Remove the chosen node and its edges
         trimmed_graph.remove_node(node_to_remove)
-        
+
         # Remove edges related to the removed node from the sorted edge list
         sorted_edges = [edge for edge in sorted_edges if node_to_remove not in edge[:2]]
-        
+
         iteration += 1
-    
+
     # Final plot
     filename = plot_current_graph(trimmed_graph, iteration, plot_seed, show_edge_labels=True)
 
@@ -351,17 +351,17 @@ def trim_network_to_n_nodes(matrix, accessions, N, plot_iterations=True, plot_se
 
     clusters = list(nx.connected_components(trimmed_graph))
     representatives = {tuple(cluster): list(cluster) for cluster in clusters}
-    
+
     return representatives
 
 ### umap/HDBSCAN_based ###
 
 def umap_clustering(matrix):
     clusterable_embedding = umap.UMAP(
-        metric='precomputed', 
-        min_dist=0.0, 
-        n_components=2, 
-        n_neighbors=30, 
+        metric='precomputed',
+        min_dist=0.0,
+        n_components=2,
+        n_neighbors=30,
         random_state=42
         ).fit_transform(matrix)
 
@@ -394,7 +394,7 @@ def plot_umap(matrix, labels, output_file):
         X_umap (np.array): Data transformed by UMAP.
     """
     X_umap = umap.UMAP(metric='precomputed', random_state=42).fit_transform(matrix)
-   
+
     plt.figure(figsize=(15, 9))
     scatter = plt.scatter(X_umap[:, 0], X_umap[:, 1], c=labels, cmap='tab20', marker='o', s=100, edgecolor='k')
     plt.title('UMAP Clustering')
@@ -406,24 +406,24 @@ def plot_umap(matrix, labels, output_file):
 
 def plot_network_subclusters(clusters, G, representatives=None, plot_seed=123):
     num_clusters = len(clusters)
-    
+
     # Determine grid size for subplots
     grid_size = int(np.ceil(np.sqrt(num_clusters)))
-    
+
     # Create subplots
     fig, axes = plt.subplots(grid_size, grid_size, figsize=(15, 15))
     axes = np.array(axes).flatten()
-    
+
     # Create a color map for clusters
     cluster_colors = plt.cm.get_cmap('tab10', num_clusters)
-    
+
     for idx, (cluster, ax) in enumerate(zip(clusters, axes)):
         subgraph = G.subgraph(cluster)
         pos = nx.spring_layout(subgraph, seed=plot_seed) # Might want to change the seed sometimes?
-        
+
         node_colors = []
         node_sizes = []
-        
+
         for node in cluster:
             if representatives and node in representatives[tuple(cluster)]:
                 node_colors.append('red')  # representatives in red
@@ -431,19 +431,19 @@ def plot_network_subclusters(clusters, G, representatives=None, plot_seed=123):
             else:
                 node_colors.append(cluster_colors(idx))
                 node_sizes.append(500)
-        
+
         # Draw the subgraph
-        nx.draw(subgraph, pos, with_labels=True, node_color=node_colors, 
-                edge_color=[cluster_colors(idx)] * len(subgraph.edges), 
+        nx.draw(subgraph, pos, with_labels=True, node_color=node_colors,
+                edge_color=[cluster_colors(idx)] * len(subgraph.edges),
                 node_size=node_sizes, font_size=10, font_color='black', ax=ax)
-        
+
         ax.set_title(f'Cluster {idx + 1}')
         ax.axis('off')
-    
+
     # Hide any unused subplots
     for j in range(num_clusters, len(axes)):
         axes[j].axis('off')
-    
+
     plt.tight_layout()
     plt.savefig('edge_network_with_highlighted_representatives.png')
     plt.close()
@@ -451,8 +451,8 @@ def plot_network_subclusters(clusters, G, representatives=None, plot_seed=123):
 def plot_current_graph(G, iteration, plot_seed, show_edge_labels=False):
     pos = nx.spring_layout(G, seed=plot_seed)  # use spring layout for consistent graph drawing
     plt.figure(figsize=(8, 8))
-    
-    nx.draw(G, pos, with_labels=True, node_color='lightblue', edge_color='gray', 
+
+    nx.draw(G, pos, with_labels=True, node_color='lightblue', edge_color='gray',
             node_size=700, font_size=10, font_color='black')
 
     if show_edge_labels:
@@ -460,7 +460,7 @@ def plot_current_graph(G, iteration, plot_seed, show_edge_labels=False):
         nx.draw_networkx_edge_labels(G, pos, edge_labels=edge_labels, font_color='red')
 
     filename=(f'network_iteration_{iteration}.png')
-    
+
     plt.title(f"Iteration {iteration}: {len(G.nodes)} nodes remaining")
     plt.savefig(filename)
     plt.close()
@@ -482,16 +482,16 @@ def save_clusters(transformed_matrix, labels, filename='cluster_assignments.csv'
 def select_closest_representatives(matrix, clusters, names, n_representatives=3):
     representatives = []
     unique_clusters = np.unique(clusters)
-   
+
     for cluster in unique_clusters:
         indices = np.where(clusters == cluster)[0]
         sub_matrix = matrix[indices][:, indices]
         avg_distances = np.mean(sub_matrix, axis=1)
-       
+
         # Get indices of the closest n representatives
         closest_indices = indices[np.argsort(avg_distances)[:n_representatives]]
         representatives.extend([names[i] for i in closest_indices])
-   
+
     return representatives
 
 def save_representatives_to_file(combined_clusters, output_file="representatives.txt"):
@@ -504,7 +504,7 @@ def relate_id_to_accession(clusters, accessions, output_file="representatives.tx
     cluster_dict = defaultdict(list)
     for idx, cluster in enumerate(clusters):
         cluster_dict[cluster].append(accessions[idx])
-    
+
     with open(output_file, 'w') as out:
         for cluster, members in cluster_dict.items():
             out.write(f"cluster {cluster}: {', '.join(members)}\n")
@@ -518,32 +518,32 @@ def create_gif(filenames, gif_filename='trimming_process.gif', duration=0.5):
 
 def main():
     parser = argparse.ArgumentParser(description='subsample from a matrix')
-    parser.add_argument("--phylip", 
+    parser.add_argument("--phylip",
     type=str,
     required=True,
     help='Path to the Phylip file'
     ),
-    
-    parser.add_argument('--methods', 
+
+    parser.add_argument('--methods',
         nargs='+',
         choices=['kmeans', 'hierarchy', 'hdbscan', 'edge_based', 'network_based', 'all'],
         required=True,
         help="method or methods to use for clustering"
     ),
 
-    parser.add_argument('--minimum_edge', 
+    parser.add_argument('--minimum_edge',
         type=float,
         default=0.01,
         help="minimum_edge for bringing forward to network"
     ),
 
-    parser.add_argument('--n_representatives', 
+    parser.add_argument('--n_representatives',
         type=int,
         default=10,
         help="number of representatives to select from network"
     ),
 
-    parser.add_argument('--plot_selection_plots', 
+    parser.add_argument('--plot_selection_plots',
         action="store_true",
         help="show plots for selection_method"
     ),
