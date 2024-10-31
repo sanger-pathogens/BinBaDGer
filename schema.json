@@ -48,6 +48,10 @@
         }
       },
       "Bin de-replication options": {
+        "bin_ranges": {
+          "default": true,
+          "help_text": "Comma-separated list of bin edges, e.g., '0.98,0.99,0.995,0.998,1'."
+        },
         "dereplicate_bins": {
           "default": true,
           "help_text": "Flag to dereplicate bins."
