@@ -23,9 +23,23 @@ def save_to_tsv(df, output_path):
     """Saves the DataFrame to a TSV file."""
     df.to_csv(output_path, sep='\t', index=False)
 
-def main(input_tsv, output_tsv, n):
-    bins = [0.98, 0.99, 0.995, 0.998, 1]
-    bin_labels = ['2%', '1%', '0.5%', '0.2%']
+def split_bin_list(input_string):
+    """Parses a comma-separated string into a list of floats."""
+    return list(map(float, input_string.split(',')))
+
+def generate_labels(bins):
+    """Generates percentage-based range labels from bins."""
+    labels = []
+    for i in range(len(bins) - 1):
+        start = round((1 - bins[i]) * 100, 1)
+        end = round((1 - bins[i + 1]) * 100, 1)
+        labels.append(f"{start}-{end}%")
+    return labels
+
+def main(input_tsv, output_tsv, bin_string, n):
+    bins = split_bin_list(bin_string)
+    
+    bin_labels = generate_labels(bins)
     
     df = read_tsv(input_tsv)
     
@@ -41,7 +55,8 @@ if __name__ == "__main__":
     parser.add_argument("--input_tsv", required=True, help="Path to input TSV file of three columns: ref, query, ani")
     parser.add_argument("--output_tsv", required=True, help="Path to save output binned tsv")
     parser.add_argument("-n", type=int, help="Number of QUERY entries to sample from each bin")
+    parser.add_argument("--bins", type=str, default='0.80,0.95,0.99,0.995,0.998,1', help="Comma-separated list of bin edges, e.g., '0.98,0.99,0.995,0.998,1'.")
     
     args = parser.parse_args()
     
-    main(args.input_tsv, args.output_tsv, args.n)
+    main(args.input_tsv, args.output_tsv, args.bins, args.n)

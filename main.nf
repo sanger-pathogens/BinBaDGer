@@ -129,7 +129,7 @@ workflow {
     }
     | set{ bin2channel }
 
-    if ( params.decreplicate_bins ) {
+    if ( params.dereplicate_bins ) {
         //for this method we need all vs all ANI
         bin2channel
         | groupTuple(by: 1)
@@ -194,13 +194,6 @@ workflow {
     /*
     optional extras
     */
-
-    if (params.lexicmap_search) {
-        channel.fromPath( params.lexicmap_db )
-        | set { lexicmap_db_ch }
-
-        LEXICMAP_SEARCH(MANIFEST_PARSE.out.assemblies, lexicmap_db_ch)
-    }
 
     //build a core genome tree for all samples (requires extraction of assemblies)
     if (params.generate_tree) {
