@@ -329,7 +329,7 @@ def build_network_to_n_nodes(matrix, accessions, N, plot_iterations=True, plot_s
     # Create gif
     if plot_iterations:
         filenames.append(filename)
-        create_gif(filenames, duration=1000 // len(filenames))
+        create_gif(filenames, gif_filename='building_process.gif', duration=1000 // len(filenames))
         # Clean up image files as we are saving gif
         for filename in filenames:
             os.remove(filename)
