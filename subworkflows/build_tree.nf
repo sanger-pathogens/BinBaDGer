@@ -21,7 +21,7 @@ workflow BUILD_TREE {
 
     main:
     
-    channel.fromPath("${params.assembly_base}/${params.species}*.xz")
+    channel.fromPath("${params.assembly_base}/${params.index_prefix}*.xz")
     | set { species_assembly_ch }
 
     cobs_matches.combine(species_assembly_ch)
