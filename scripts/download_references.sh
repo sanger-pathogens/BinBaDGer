@@ -21,7 +21,7 @@ readarray -t sanitized_species < <(jq -r '.organism.organismName' ${tmp_dir}/ncb
 # Keep metadata
 metadata_dir="${outdir}/metadata"
 mkdir -p "${metadata_dir}"
-mv ${tmp_dir}/ncbi_dataset/data/assembly_data_report.jsonl "${metadata_dir}"
+mv ${tmp_dir}/ncbi_dataset/data/assembly_data_report.jsonl "${metadata_dir}"/assembly_data_report_$(date -I).jsonl
 
 # Move references into dir structure
 for i in "${!dl_accessions[@]}"; do
