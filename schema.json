@@ -49,8 +49,12 @@
       },
       "Bin de-replication options": {
         "bin_ranges": {
-          "default": true,
+          "default": '0.98,0.99,0.995,0.998,1',
           "help_text": "Comma-separated list of bin edges, e.g., '0.98,0.99,0.995,0.998,1'."
+        },
+        "retain_below_bins": {
+          "default": false,
+          "help_text": "Flag to keep samples that fall below bins."
         },
         "dereplicate_bins": {
           "default": true,
