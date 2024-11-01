@@ -16,7 +16,9 @@ for species_dir in "${species_dirs[@]}"; do
   species=$(basename "${species_dir}")
   species_assemblies=(${species_dir}/*/*.fna)
   for assembly in "${species_assemblies[@]}"; do
-    echo "${species},$(realpath ${assembly})"
+    if [ -s "${assembly}" ]; then
+      echo "${species},$(realpath ${assembly})"
+    fi
   done
 done
 
