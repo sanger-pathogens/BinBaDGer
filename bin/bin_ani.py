@@ -43,7 +43,7 @@ def main(input_tsv, output_tsv, bin_string, n, allow_outsiders):
     if allow_outsiders: #add a lower range to catch all
         bins = [0.0] + bins
     
-    bin_labels = generate_labels(bins, allow_outsiders)
+    bin_labels = generate_labels(bins)
     
     df = read_tsv(input_tsv)
     
