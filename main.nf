@@ -159,7 +159,8 @@ workflow {
 
     if (params.download_fastq) {
         data_to_download
-        | join(sample_metadata) //replace this with filtered metadata
+        | join(sample_metadata)
+        | ifEmpty { error("Error: No metadata matching final selection") }
         | map { join_accession, bin_info, subsampled_metadata ->
             def merged_meta = [:]
             merged_meta = bin_info + subsampled_metadata
