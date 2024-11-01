@@ -145,7 +145,7 @@ workflow {
 
         SUBSELECT_GRAPH.out.representatives
         | splitCsv()
-        | ifEmpty { error("No representatives found for any bin") }
+        | ifEmpty { error("Error: No representatives found for any bin") }
         | set{ chosen_representatives }
         
         bin2channel
@@ -174,14 +174,14 @@ workflow {
             [ merged_meta, read1_ftp_url, read2_ftp_url ]
         }
         | DOWNLOAD_FASTQS
-        | ifEmpty { error("All Downloads failed") }
+        | ifEmpty { error("Error: All Downloads failed") }
         | set { read_ch }
 
         read_ch
         | QC
         | filter { it[1] == 'pass' && it[2] == 'pass' }
         | map { it -> it[0] } //only keep meta
-        | ifEmpty { error("All samples failed QC") }
+        | ifEmpty { error("Error: All samples failed QC") }
         | set { filtered_samples }
 
         filtered_samples
