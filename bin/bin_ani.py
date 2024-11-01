@@ -27,7 +27,7 @@ def split_bin_list(input_string):
     """Parses a comma-separated string into a list of floats."""
     return list(map(float, input_string.split(',')))
 
-def generate_labels(bins, allow_outsiders):
+def generate_labels(bins):
     """Generates percentage-based range labels from bins."""
     labels = []
     for i in range(len(bins) - 1):
