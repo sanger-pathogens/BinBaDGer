@@ -121,6 +121,8 @@ workflow {
      | PLOT_ANI
 
     BIN_ANI_DISTANCES(SKETCH_ANI_DIST.out.query_ani)
+
+    BIN_ANI_DISTANCES.out.binned_ani
     | splitCsv(header: true, sep: "\t")
     | map { meta, bin_info ->
         def meta_new = [:]
