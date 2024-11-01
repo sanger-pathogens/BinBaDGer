@@ -84,6 +84,10 @@ workflow {
     | POSTPROCESS_COBS
     | set { cobs_matches }
 
+    cobs_matches
+    | splitCsv()
+    | ifEmpty { error("Error: Nothing returned by cobs") }
+
 
     DOWNLOAD_METADATA(cobs_matches)
     | splitCsv(header: true, sep: "\t")
@@ -117,6 +121,8 @@ workflow {
      | PLOT_ANI
 
     BIN_ANI_DISTANCES(SKETCH_ANI_DIST.out.query_ani)
+
+    BIN_ANI_DISTANCES.out.binned_ani
     | splitCsv(header: true, sep: "\t")
     | map { meta, bin_info ->
         def meta_new = [:]
@@ -141,6 +147,7 @@ workflow {
 
         SUBSELECT_GRAPH.out.representatives
         | splitCsv()
+        | ifEmpty { error("Error: No representatives found for any bin") }
         | set{ chosen_representatives }
         
         bin2channel
@@ -154,7 +161,8 @@ workflow {
 
     if (params.download_fastq) {
         data_to_download
-        | join(sample_metadata) //replace this with filtered metadata
+        | join(sample_metadata)
+        | ifEmpty { error("Error: No metadata matching final selection") }
         | map { join_accession, bin_info, subsampled_metadata ->
             def merged_meta = [:]
             merged_meta = bin_info + subsampled_metadata
@@ -169,12 +177,14 @@ workflow {
             [ merged_meta, read1_ftp_url, read2_ftp_url ]
         }
         | DOWNLOAD_FASTQS
+        | ifEmpty { error("Error: All Downloads failed") }
         | set { read_ch }
 
         read_ch
         | QC
         | filter { it[1] == 'pass' && it[2] == 'pass' }
         | map { it -> it[0] } //only keep meta
+        | ifEmpty { error("Error: All samples failed QC") }
         | set { filtered_samples }
 
         filtered_samples

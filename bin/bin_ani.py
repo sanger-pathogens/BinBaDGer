@@ -2,10 +2,24 @@
 
 import pandas as pd
 import argparse
+import logging
+
+def setup_logging(log_file):
+    """Sets up logging to a specified log file."""
+    logging.basicConfig(
+        filename=log_file,
+        level=logging.INFO,
+        format='%(asctime)s - %(levelname)s - %(message)s',
+    )
 
 def bin_similarities(df, bins, bin_labels):
     """bins the ani values in the DataFrame."""
     df['ref_ani_bin'] = pd.cut(df['ani'], bins=bins, labels=bin_labels)
+
+    bin_counts = df['ref_ani_bin'].value_counts().reindex(bin_labels)
+    for bin_label, count in bin_counts.items():
+        logging.info(f"Bin '{bin_label}' has {int(count)} entries.")
+            
     return df
 
 def read_tsv(file_path):
@@ -64,7 +78,10 @@ if __name__ == "__main__":
     parser.add_argument("-n", type=int, help="Number of QUERY entries to sample from each bin")
     parser.add_argument("--bins", type=str, default='0.80,0.95,0.99,0.995,0.998,1', help="Comma-separated list of bin edges, e.g., '0.98,0.99,0.995,0.998,1'.")
     parser.add_argument("--assign_outsiders", action='store_true', help="add a new bin to the lower side to catch those which fall below the lowest edge")
+    parser.add_argument("--log_file", type=str, default="binning.log", help="Path to save log file for binning warnings")
     
     args = parser.parse_args()
+
+    setup_logging(args.log_file)
     
     main(args.input_tsv, args.output_tsv, args.bins, args.n, args.assign_outsiders)
