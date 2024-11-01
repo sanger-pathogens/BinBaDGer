@@ -5,7 +5,7 @@ import argparse
 
 def bin_similarities(df, bins, bin_labels):
     """bins the ani values in the DataFrame."""
-    df['ref_ani_bin'] = pd.cut(df['ani'], bins=bins, labels=bin_labels, include_lowest=False)
+    df['ref_ani_bin'] = pd.cut(df['ani'], bins=bins, labels=bin_labels)
     return df
 
 def read_tsv(file_path):
