@@ -118,7 +118,7 @@
           "help_text": "Flag to publish FastQC output"
       },
       "kraken2_db" : {
-          "default": "/data/pam/software/kraken2/k2_pluspf_20240904",
+          "default": "/data/pam/software/kraken2/k2_standard_16gb_20240904",
           "help_text": "Path to the Kraken2 database"
       }
     }
