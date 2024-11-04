@@ -61,8 +61,8 @@
           "help_text": "Flag to dereplicate bins."
         },
         "cluster_method": {
-          "default": "network_based",
-          "help_text": "Clustering method to use for samples in each bin; options are network_based or edge_based."
+          "default": "network_based_trim",
+          "help_text": "Clustering method to use for samples in each bin; options are network_based_trim or edge_based."
         },
         "representatives": {
           "default": 10,
