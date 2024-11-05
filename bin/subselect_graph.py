@@ -18,7 +18,6 @@ from networkx.algorithms.community import greedy_modularity_communities
 
 import imageio
 import os
-import time
 
 ##### methods handling class #####
 
