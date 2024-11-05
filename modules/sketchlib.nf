@@ -70,7 +70,7 @@ process SKETCH_ANI_DIST {
 process SKETCH_SUBSET_TOTAL_ANI_DIST {
     tag "${meta.reference_ID}_${meta.ref_ani_bin}"
     label "cpu_2"
-    label "mem_500M"
+    label "mem_1"
     label "time_30m"
 
     container 'quay.io/ssd28/experimental/pp-sketchlib-rust:0.1.2_sd28_fix'
