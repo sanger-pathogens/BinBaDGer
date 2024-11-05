@@ -7,9 +7,10 @@ import os
 import numpy as np
 import pp_sketchlib
 import argparse
+import pandas as pd
+
 from pathlib import Path
 from typing import Tuple, List
-import pandas as pd
 
 from tree_builder import generate_phylogeny
 
@@ -78,7 +79,7 @@ def read_tsv_to_core_accession(filepath: str) -> Tuple[List[str], np.ndarray, np
         # Get unique identifiers while preserving order of first appearance
         unique_ids = pd.unique(pd.concat([df['sample'], df['reference']]))
         id_to_idx = {name: idx for idx, name in enumerate(unique_ids)}
-        
+
         # Vectorized creation of index arrays using the mapping
         df['sample_idx'] = df['sample'].map(id_to_idx)
         df['reference_idx'] = df['reference'].map(id_to_idx)
