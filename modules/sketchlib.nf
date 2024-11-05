@@ -43,7 +43,7 @@ process SKETCH_SUBSET {
 process SKETCH_ANI_DIST {
     tag "${meta.ID}"
     label "cpu_2"
-    label "mem_500M"
+    label "mem_1"
     label "time_30m"
 
     //will reach out to get a real fix rather than my attempt at fixing the index problem

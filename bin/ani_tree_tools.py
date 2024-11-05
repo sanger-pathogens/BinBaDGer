@@ -10,11 +10,10 @@ import argparse
 import pandas as pd
 
 from pathlib import Path
-from typing import Tuple, List
 
 from tree_builder import generate_phylogeny
 
-def read_tsv_to_structures(filepath: str) -> Tuple[List[str], np.ndarray]:
+def read_tsv_to_structures(filepath: str) -> tuple[list[str], np.ndarray]:
     """
     Read a TSV file containing pairwise ANI values and convert to a distance matrix.
     
@@ -48,14 +47,10 @@ def read_tsv_to_structures(filepath: str) -> Tuple[List[str], np.ndarray]:
             
         return list(unique_ids), dist_mat
         
-    except FileNotFoundError:
-        raise FileNotFoundError(f"Could not find TSV file: {filepath}")
-    except pd.errors.EmptyDataError:
-        raise ValueError("The TSV file is empty")
     except Exception as e:
         raise ValueError(f"Error processing TSV file: {str(e)}")
 
-def read_tsv_to_core_accession(filepath: str) -> Tuple[List[str], np.ndarray, np.ndarray]:
+def read_tsv_to_core_accession(filepath: str) -> tuple[list[str], np.ndarray, np.ndarray]:
     """
     Read a TSV file containing pairwise core and accessory distances and convert to distance matrices.
     
@@ -101,14 +96,10 @@ def read_tsv_to_core_accession(filepath: str) -> Tuple[List[str], np.ndarray, np
             
         return list(unique_ids), core_dist_mat, acc_dist_mat
         
-    except FileNotFoundError:
-        raise FileNotFoundError(f"Could not find TSV file: {filepath}")
-    except pd.errors.EmptyDataError:
-        raise ValueError("The TSV file is empty")
     except Exception as e:
         raise ValueError(f"Error processing TSV file: {str(e)}")
 
-def generate_phylip_matrix(ref_list: List[str], matrix: np.ndarray, meta_id: str) -> str:
+def generate_phylip_matrix(ref_list: list[str], matrix: np.ndarray, meta_id: str) -> str:
     """
     Generate a Phylip format distance matrix file.
     
