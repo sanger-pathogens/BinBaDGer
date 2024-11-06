@@ -263,8 +263,14 @@ def build_network(matrix, accessions) -> nx.Graph:
     for i in range(num_nodes):
         for j in range(i + 1, num_nodes):
             weight = matrix[i, j]
-            heapq.heappush(pq, (weight, accession_map[i], accession_map[j]))
-            G.add_edge(accession_map[i], accession_map[j], weight=weight)
+            pq.append((weight, accession_map[i], accession_map[j]))
+    
+    heapq.heapify(pq)
+
+    print(pq)
+
+    for weight, node1, node2 in pq:
+        G.add_edge(node1, node2, weight=weight)
 
     return G
 
