@@ -73,12 +73,6 @@
           "help_text": "Flag to create GIF visualization for choosing representatives when using network_based clustering method."
         }
       },
-      "QC options": {
-        "save_fastqc": {
-          "default": true,
-          "help_text": "Flag to save FastQC output files."
-        }
-      },
       "Tree building options": {
         "assembly_base": {
           "default": "/data/pam/collections/all_the_bacteria/0.2/assembly/",
@@ -117,5 +111,15 @@
           "help_text": "Display logs in monochrome mode."
         }
       }
+    },
+    "overwrite_param": {
+      "save_fastqc": {
+          "default": true,
+          "help_text": "Flag to publish FastQC output"
+      },
+      "kraken2_db" : {
+          "default": "/data/pam/software/kraken2/k2_standard_16gb_20240904",
+          "help_text": "Path to the Kraken2 database"
+      }
     }
-  }
+}
