@@ -13,7 +13,7 @@ from pathlib import Path
 
 from tree_builder import generate_phylogeny
 
-def read_tsv_to_structures(filepath: str) -> Tuple[List[str], np.ndarray]:
+def read_tsv_to_structures(filepath: str) -> tuple[list[str], np.ndarray]:
     """
     Read a TSV file containing pairwise ANI values and convert to a distance matrix.
     
@@ -43,18 +43,13 @@ def read_tsv_to_structures(filepath: str) -> Tuple[List[str], np.ndarray]:
         dist_mat = np.zeros((n, n), dtype=np.float32)
         
         dist_mat[df['sample_idx'], df['reference_idx']] = df['distance']
-        dist_mat[df['reference_idx'], df['sample_idx']] = df['distance']
             
         return list(unique_ids), dist_mat
         
-    except FileNotFoundError:
-        raise FileNotFoundError(f"Could not find TSV file: {filepath}")
-    except pd.errors.EmptyDataError:
-        raise ValueError("The TSV file is empty")
     except Exception as e:
         raise ValueError(f"Error processing TSV file: {str(e)}")
 
-def read_tsv_to_core_accession(filepath: str) -> Tuple[List[str], np.ndarray, np.ndarray]:
+def read_tsv_to_core_accession(filepath: str) -> tuple[list[str], np.ndarray, np.ndarray]:
     """
     Read a TSV file containing pairwise core and accessory distances and convert to distance matrices.
     
@@ -100,14 +95,10 @@ def read_tsv_to_core_accession(filepath: str) -> Tuple[List[str], np.ndarray, np
             
         return list(unique_ids), core_dist_mat, acc_dist_mat
         
-    except FileNotFoundError:
-        raise FileNotFoundError(f"Could not find TSV file: {filepath}")
-    except pd.errors.EmptyDataError:
-        raise ValueError("The TSV file is empty")
     except Exception as e:
         raise ValueError(f"Error processing TSV file: {str(e)}")
 
-def generate_phylip_matrix(ref_list: List[str], matrix: np.ndarray, meta_id: str) -> str:
+def generate_phylip_matrix(ref_list: list[str], matrix: np.ndarray, meta_id: str) -> str:
     """
     Generate a Phylip format distance matrix file.
     
@@ -128,13 +119,10 @@ def generate_phylip_matrix(ref_list: List[str], matrix: np.ndarray, meta_id: str
         with open(output_path, 'w') as f:
             f.write(f"{len(ref_list)}\n")
             
-            # Write distance matrix with aligned columns
             for ref, distances in zip(ref_list, matrix):
-                # Pad reference name with spaces to align columns
-                padded_ref = f"{ref:<10}"
                 # Format distances with consistent precision
-                formatted_distances = ' '.join(f"{d:.6f}" for d in distances)
-                f.write(f"{padded_ref} {formatted_distances}\n")
+                formatted_distances = ' '.join(str(d) if d != 0.0 else "0.0" for d in distances)
+                f.write(f"{ref} {formatted_distances}\n")
                 
         return str(output_path)
         
