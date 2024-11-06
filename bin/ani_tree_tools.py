@@ -10,7 +10,6 @@ import argparse
 import pandas as pd
 
 from pathlib import Path
-from typing import Tuple, List
 
 from tree_builder import generate_phylogeny
 
