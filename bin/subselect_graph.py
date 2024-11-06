@@ -7,6 +7,7 @@ import pandas as pd
 import matplotlib.pyplot as plt
 import umap
 from collections import defaultdict
+import heapq
 
 from sklearn.manifold import MDS
 from sklearn.cluster import KMeans, HDBSCAN
@@ -256,10 +257,14 @@ def build_network(matrix, accessions) -> nx.Graph:
     num_nodes = len(matrix)
 
     accession_map = {i: accessions[i] for i in range(num_nodes)}
-
+    
+    # Use a priority queue (min heap) to store the edges
+    pq = []
     for i in range(num_nodes):
         for j in range(i + 1, num_nodes):
-            G.add_edge(accession_map[i], accession_map[j], weight=matrix[i, j])
+            weight = matrix[i, j]
+            heapq.heappush(pq, (weight, accession_map[i], accession_map[j]))
+            G.add_edge(accession_map[i], accession_map[j], weight=weight)
 
     return G
 
@@ -314,11 +319,9 @@ def trim_network_to_n_nodes(matrix, accessions, N, plot_iterations=True, plot_se
     if len(G.nodes) <= N:
         plot_current_graph(G, 0, plot_seed, show_edge_labels=True)
         return {tuple(G.nodes): list(G.nodes)} #if there isn't enough to do the selection just return the nodes in the same structure as below
-
-    # Sort edges by weight (shortest first)
-    sorted_edges = sorted(G.edges(data=True), key=lambda x: x[2]['weight'])
-
+    
     trimmed_graph = G.copy()
+    removed_nodes = set()
     iteration = 0
     filenames = []
 
@@ -328,20 +331,19 @@ def trim_network_to_n_nodes(matrix, accessions, N, plot_iterations=True, plot_se
             filenames.append(filename)
 
         # Get the shortest edge and remove one of its nodes
-        shortest_edge = sorted_edges.pop(0)
-        node_to_remove = shortest_edge[0] if trimmed_graph.degree(shortest_edge[0]) <= trimmed_graph.degree(shortest_edge[1]) else shortest_edge[1]
-
-        # Remove the chosen node and its edges
-        trimmed_graph.remove_node(node_to_remove)
-
-        # Remove edges related to the removed node from the sorted edge list
-        sorted_edges = [edge for edge in sorted_edges if node_to_remove not in edge[:2]]
-
-        iteration += 1
-
+        while pq:
+            weight, node1, node2 = heapq.heappop(pq)
+            #rather than re-organising the heap each time just skip nodes that are already removed by storing in a set
+            if node1 not in removed_nodes and node2 not in removed_nodes:
+                node_to_remove = node1 if trimmed_graph.degree(node1) <= trimmed_graph.degree(node2) else node2
+                trimmed_graph.remove_node(node_to_remove)
+                removed_nodes.add(node_to_remove)
+                break
+        
+        iteration += 1 
+    
     # Final plot
     filename = plot_current_graph(trimmed_graph, iteration, plot_seed, show_edge_labels=True)
-
     if plot_iterations:
         filenames.append(filename)
         create_gif(filenames)

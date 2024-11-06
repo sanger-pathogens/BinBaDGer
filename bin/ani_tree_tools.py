@@ -7,86 +7,127 @@ import os
 import numpy as np
 import pp_sketchlib
 import argparse
+import pandas as pd
+
+from pathlib import Path
+
 from tree_builder import generate_phylogeny
 
-import numpy as np
+def read_tsv_to_structures(filepath: str) -> tuple[list[str], np.ndarray]:
+    """
+    Read a TSV file containing pairwise ANI values and convert to a distance matrix.
+    
+    Args:
+        filepath: Path to TSV file with columns: sample, reference, ani
+        
+    Returns:
+        Tuple containing:
+        - List of unique sample/reference names
+        - Square numpy array of distance values
+    """
+    try:
+        df = pd.read_csv(filepath, sep='\t', names=['sample', 'reference', 'ani'])
+        
+        #get the uniques and store them indexed to map to the df
+        unique_ids = pd.unique(pd.concat([df['sample'], df['reference']]))
+        id_to_idx = {name: idx for idx, name in enumerate(unique_ids)}
 
-def read_tsv_to_structures(reference_tsv):
-    # Initialize the structures
-    ref_list = []
-    dist_dict = {}
+        df['sample_idx'] = df['sample'].map(id_to_idx)
+        df['reference_idx'] = df['reference'].map(id_to_idx)
+        
+        # Vectorized conversion of ANI to distance
+        df['distance'] = 1 - df['ani']
+        
+        # Initialize distance matrix
+        n = len(unique_ids)
+        dist_mat = np.zeros((n, n), dtype=np.float32)
+        
+        dist_mat[df['sample_idx'], df['reference_idx']] = df['distance']
+            
+        return list(unique_ids), dist_mat
+        
+    except Exception as e:
+        raise ValueError(f"Error processing TSV file: {str(e)}")
 
-    with open(reference_tsv, 'r') as ref_file:
-        for line in ref_file:
-            # Split the line by tabs
-            sample, reference, ani = line.strip().split('\t')
-            if sample not in ref_list:
-                ref_list.append(sample)
-            if reference not in ref_list:
-                ref_list.append(reference)
-            # Convert ANI to distance
-            dist = 1 - float(ani)
-            dist_dict[(sample, reference)] = dist
+def read_tsv_to_core_accession(filepath: str) -> tuple[list[str], np.ndarray, np.ndarray]:
+    """
+    Read a TSV file containing pairwise core and accessory distances and convert to distance matrices.
+    
+    Args:
+        filepath: Path to TSV file with columns: sample, reference, core_dist, acc_dist
+        
+    Returns:
+        Tuple containing:
+        - List of unique sample/reference names
+        - Core distance matrix (numpy array)
+        - Accessory distance matrix (numpy array)
+    """
+    try:
+        # Read TSV into DataFrame
+        df = pd.read_csv(
+            filepath, 
+            sep='\t', 
+            names=['sample', 'reference', 'core_dist', 'acc_dist']
+        )
+        
+        # Get unique identifiers while preserving order of first appearance
+        unique_ids = pd.unique(pd.concat([df['sample'], df['reference']]))
+        id_to_idx = {name: idx for idx, name in enumerate(unique_ids)}
 
-    # Initialize a square distance matrix
-    dist_mat = np.zeros((len(ref_list), len(ref_list)), dtype=np.float32)
+        # Vectorized creation of index arrays using the mapping
+        df['sample_idx'] = df['sample'].map(id_to_idx)
+        df['reference_idx'] = df['reference'].map(id_to_idx)
 
-    for i, sample in enumerate(ref_list):
-        for j in range(i, len(ref_list)):
-            reference = ref_list[j]
-            if i == j:
-                dist = 0.0  # Distance to self is 0
-            else:
-                dist_mat[i, j] = dist_dict[(sample, reference)]
 
-    return ref_list, dist_mat
+        n = len(unique_ids)
+        
+        # Initialize distance matrices
+        core_dist_mat = np.zeros((n, n))
+        acc_dist_mat = np.zeros((n, n))
 
-def read_tsv_to_core_accession(reference_tsv):
-    # Initialize the structures
-    ref_list = []
-    distances = []
+        #fill the core matrix
+        core_dist_mat[df['sample_idx'], df['reference_idx']] = df['core_dist']
+        core_dist_mat[df['reference_idx'], df['sample_idx']] = df['core_dist']
 
-    # Read and process the reference TSV
-    with open(reference_tsv, 'r') as ref_file:
-        for line in ref_file:
-            # Split the line by tabs
-            sample, reference, core_dist, acc_dist = line.strip().split('\t')
-            # Add the unique samples to ref_list
-            if sample not in ref_list:
-                ref_list.append(sample)
-            if reference not in ref_list:
-                ref_list.append(reference)
-            distances.append((sample, reference, float(core_dist), float(acc_dist)))
+        #now accessory
+        acc_dist_mat[df['sample_idx'], df['reference_idx']] = df['acc_dist']
+        acc_dist_mat[df['reference_idx'], df['sample_idx']] = df['acc_dist']
+            
+        return list(unique_ids), core_dist_mat, acc_dist_mat
+        
+    except Exception as e:
+        raise ValueError(f"Error processing TSV file: {str(e)}")
 
-    # Initialize matrices
-    num_samples = len(ref_list)
-    core_dist_mat = np.zeros((num_samples, num_samples))
-    acc_dist_mat = np.zeros((num_samples, num_samples))
-
-    # Update the distance matrices
-    for sample, reference, core_dist, acc_dist in distances:
-        sample_idx = ref_list.index(sample)
-        reference_idx = ref_list.index(reference)
-
-        core_dist_mat[sample_idx, reference_idx] = core_dist
-        core_dist_mat[reference_idx, sample_idx] = core_dist
-
-        acc_dist_mat[sample_idx, reference_idx] = acc_dist
-        acc_dist_mat[reference_idx, sample_idx] = acc_dist
-
-    return ref_list, core_dist_mat, acc_dist_mat
-
-def generate_phylip_matrix(ref_list, matrix, meta_ID):
-    # generate phylip matrix
-    phylip_name = f"{meta_ID}_distances.phylip"
-    with open(phylip_name, 'w') as pFile:
-        pFile.write(str(len(ref_list)) + "\n")
-        for Dist, ref in zip(matrix, ref_list):
-            pFile.write(ref)
-            pFile.write(' ' + ' '.join(map(str, Dist)))
-            pFile.write("\n")
-    full_path = os.path.abspath(phylip_name)
-    return full_path
+def generate_phylip_matrix(ref_list: list[str], matrix: np.ndarray, meta_id: str) -> str:
+    """
+    Generate a Phylip format distance matrix file.
+    
+    Args:
+        ref_list: List of reference names
+        matrix: Square distance matrix
+        meta_id: Identifier for output filename
+        
+    Returns:
+        Absolute path to generated Phylip file
+    """
+    if len(ref_list) != matrix.shape[0] or matrix.shape[0] != matrix.shape[1]:
+        raise ValueError("Matrix dimensions do not match reference list length")
+        
+    output_path = Path(f"{meta_id}_distances.phylip").absolute()
+    
+    try:
+        with open(output_path, 'w') as f:
+            f.write(f"{len(ref_list)}\n")
+            
+            for ref, distances in zip(ref_list, matrix):
+                # Format distances with consistent precision
+                formatted_distances = ' '.join(str(d) if d != 0.0 else "0.0" for d in distances)
+                f.write(f"{ref} {formatted_distances}\n")
+                
+        return str(output_path)
+        
+    except IOError as e:
+        raise IOError(f"Error writing Phylip file: {str(e)}")
     
 
 if __name__ == "__main__":
@@ -104,7 +145,7 @@ if __name__ == "__main__":
     else:
         # Read the TSV and process data
         if args.core_accession:
-            ref_list, dist_mat, acc_dist_mat = read_tsv_to_core_accession(args.dist_tsv_path)        
+            ref_list, dist_mat, _ = read_tsv_to_core_accession(args.dist_tsv_path)        
         else:
             ref_list, dist_mat = read_tsv_to_structures(args.dist_tsv_path)
 
