@@ -40,7 +40,7 @@ include { DOWNLOAD_FASTQS; PUBLISH_FASTQS } from './modules/fastqs.nf'
 //from assorted-sub-workflows
 include { DOWNLOAD_METADATA                                                                          } from './assorted-sub-workflows/combined_input/modules/ena_downloader.nf'
 include { FILTER_METADATA                                                                            } from './assorted-sub-workflows/combined_input/modules/filter_metadata.nf'
-include { METADATA                                                                                   } from './assorted-sub-workflows/irods_extractor/modules/metadata_save.nf'
+include { METADATA; METADATA as PUBLISH_FULL_METADATA                                                        } from './assorted-sub-workflows/irods_extractor/modules/metadata_save.nf'
 
 //
 // SUBWORKFLOWS
@@ -152,23 +152,36 @@ workflow {
         
         bin2channel
         | join(chosen_representatives)
-        | set { data_to_download }
+        | set { final_dataset }
     
     } else {
         bin2channel
-        | set { data_to_download }
+        | set { final_dataset }
     }
 
+    final_dataset
+    | join(sample_metadata)
+    | ifEmpty { error("Error: No metadata matching final selection") }
+    | map { join_accession, bin_info, subsampled_metadata ->
+        def merged_meta = [:]
+        merged_meta = bin_info + subsampled_metadata
+        merged_meta.ID = join_accession
+        merged_meta
+    }
+    | set { binned_samples_with_metadata }
+
+    if (params.save_all_metadata) {
+        full_metadata_tag = channel.value("full_metadata")
+
+        binned_samples_with_metadata
+        | collectFile() { map -> [ "lane_metadata.txt", map.collect{it}.join(', ') + '\n' ] }
+        | set{ full_metadata }
+
+        PUBLISH_FULL_METADATA(full_metadata, full_metadata_tag)
+    }
+    
     if (params.download_fastq) {
-        data_to_download
-        | join(sample_metadata)
-        | ifEmpty { error("Error: No metadata matching final selection") }
-        | map { join_accession, bin_info, subsampled_metadata ->
-            def merged_meta = [:]
-            merged_meta = bin_info + subsampled_metadata
-            merged_meta.ID = join_accession
-            merged_meta
-        }
+        binned_samples_with_metadata
         | filter { it.fastq_ftp.contains(';') } //if its paired its seperated by a semi-colon
         | map{ merged_meta ->
             def (read1_ftp, read2_ftp) = merged_meta.fastq_ftp.split(';')
