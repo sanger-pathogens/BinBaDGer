@@ -170,7 +170,7 @@ workflow {
     }
     | set { binned_samples_with_metadata }
 
-    if (params.save_all_metadata) {
+    if (params.save_pre_qc_metadata) {
         full_metadata_tag = channel.value("pre_read_QC")
 
         binned_samples_with_metadata
