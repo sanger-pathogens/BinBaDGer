@@ -163,8 +163,7 @@ workflow {
     | join(sample_metadata)
     | ifEmpty { error("Error: No metadata matching final selection") }
     | map { join_accession, bin_info, subsampled_metadata ->
-        def merged_meta = [:]
-        merged_meta = bin_info + subsampled_metadata
+        def merged_meta = bin_info + subsampled_metadata
         merged_meta.ID = join_accession
         merged_meta
     }
