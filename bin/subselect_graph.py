@@ -258,19 +258,10 @@ def build_network(matrix, accessions) -> nx.Graph:
 
     accession_map = {i: accessions[i] for i in range(num_nodes)}
     
-    # Use a priority queue (min heap) to store the edges
-    pq = []
+
     for i in range(num_nodes):
         for j in range(i + 1, num_nodes):
-            weight = matrix[i, j]
-            pq.append((weight, accession_map[i], accession_map[j]))
-    
-    heapq.heapify(pq)
-
-    print(pq)
-
-    for weight, node1, node2 in pq:
-        G.add_edge(node1, node2, weight=weight)
+            G.add_edge(accession_map[i], accession_map[j], weight=matrix[i, j])
 
     return G
 
@@ -321,6 +312,15 @@ def build_network_to_n_nodes(matrix, accessions, N, seed_edge=None, plot_iterati
 def trim_network_to_n_nodes(matrix, accessions, N, plot_iterations=True, plot_seed=123):
     # Build complete network
     G = build_network(matrix, accessions)
+
+    # Use a priority queue (min heap) to store the edges
+    pq = []
+    for i in range(num_nodes):
+        for j in range(i + 1, num_nodes):
+            weight = matrix[i, j]
+            pq.append((weight, accession_map[i], accession_map[j]))
+    
+    heapq.heapify(pq)
 
     if len(G.nodes) <= N:
         plot_current_graph(G, 0, plot_seed, show_edge_labels=True)
