@@ -377,7 +377,7 @@ def trim_network_to_n_nodes(matrix: np.ndarray,
     while len(complete_graph.nodes) > N:
         # Plot the current graph if your making a gif
         if plot_iterations:
-            filename = plot_current_graph(complete_graph, iteration, plot_seed, removed_nodes=removed_nodes)
+            filename = plot_current_graph(complete_graph, iteration, plot_seed)
             filenames.append(filename)
 
         # Remove the node with the lowest degree from the shortest edge if possible
