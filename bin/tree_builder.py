@@ -1,4 +1,4 @@
-# tree_builder.py
+#!/usr/bin/env python3
 import numpy as np
 import dendropy
 import subprocess

@@ -308,50 +308,85 @@ def build_network_to_n_nodes(matrix, accessions, N, seed_edge=None, plot_iterati
 
     return representatives
 
-
-def trim_network_to_n_nodes(matrix, accessions, N, plot_iterations, plot_seed=123, ):
-    G = nx.Graph()
-
-    num_nodes = len(matrix)
-
-    accession_map = {i: accessions[i] for i in range(num_nodes)}
+def trim_node(
+    trimmed_graph: nx.Graph, 
+    pq: list[tuple[float, str, str]], 
+    removed_nodes: set
+) -> bool:
+    """
+    remove a node and add it to removed node set
     
-    # Use a priority queue (min heap) to store the edges
-    pq = []
-    for i in range(num_nodes):
-        for j in range(i + 1, num_nodes):
-            weight = matrix[i, j]
-            heapq.heappush(pq, (weight, accession_map[i], accession_map[j]))
-            G.add_edge(accession_map[i], accession_map[j], weight=weight)
-
-    if len(G.nodes) <= N:
-        plot_current_graph(G, 0, plot_seed, show_edge_labels=True)
-        return {tuple(G.nodes): list(G.nodes)} #if there isn't enough to do the selection just return the nodes in the same structure as below
+    Input:
+    trimmed_graph: The latest graph of the network to have a node removed from
+    pq: a heap of the edge lengths between nodes
+    removed_nodes: a set of previously removed nodes - lazy delete by marking them as removed
     
-    trimmed_graph = G.copy()
+    Output:
+    bool true if it can remove a node otherwise false otherwise
+    """
+    while pq:
+        weight, node1, node2 = pq.pop()
+        if node1 not in removed_nodes and node2 not in removed_nodes:
+            node_to_remove = node1 if trimmed_graph.degree(node1) <= trimmed_graph.degree(node2) else node2
+            trimmed_graph.remove_node(node_to_remove)
+            removed_nodes.add(node_to_remove)
+            return True
+    
+    return False
+
+
+def trim_network_to_n_nodes(matrix: np.ndarray, 
+                            accessions: list, 
+                            N: int, 
+                            plot_iterations: bool, 
+                            plot_seed: int = 123
+                            ) -> dict:
+    """
+    Trim a network matrix to a maximum of N nodes.
+    
+    Input:
+    matrix (numpy.ndarray): Adjacency matrix representing the network.
+    accessions (list): List of accession IDs corresponding to the nodes in the network.
+    N (int): Maximum number of nodes to retain in the trimmed network.
+    plot_iterations (bool): Whether to plot the network at each iteration of the trimming process.
+    plot_seed (int, optional): Seed for the network plot. Default is 123.
+    
+    Output:
+    dict: A dictionary of representatives chosen from the smallest graph.
+    """
+    # Build complete graph
+    complete_graph = build_network(matrix, accessions)
+
+    if len(complete_graph.nodes) <= N:
+        plot_current_graph(complete_graph, 0, plot_seed, show_edge_labels=True)
+        return {tuple(complete_graph.nodes): list(complete_graph.nodes)} #if there isn't enough to do the selection just return the nodes in the same structure as below
+    
     removed_nodes = set()
+
     iteration = 0
     filenames = []
+
+    # Use a priority queue (min heap) to store the edges
+    pq = []
+    for i in range(len(accessions)):
+        for j in range(i + 1, len(accessions)):
+            weight = matrix[i, j]
+            pq.append((weight, accessions[i], accessions[j]))
+    heapq.heapify(pq)
     
-    while len(trimmed_graph.nodes) > N:
+    while len(complete_graph.nodes) > N:
+        # Plot the current graph if your making a gif
         if plot_iterations:
-            filename = plot_current_graph(trimmed_graph, iteration, plot_seed)
+            filename = plot_current_graph(complete_graph, iteration, plot_seed, removed_nodes=removed_nodes)
             filenames.append(filename)
 
-        # Get the shortest edge and remove one of its nodes
-        while pq:
-            weight, node1, node2 = heapq.heappop(pq)
-            #rather than re-organising the heap each time just skip nodes that are already removed by storing in a set
-            if node1 not in removed_nodes and node2 not in removed_nodes:
-                node_to_remove = node1 if trimmed_graph.degree(node1) <= trimmed_graph.degree(node2) else node2
-                trimmed_graph.remove_node(node_to_remove)
-                removed_nodes.add(node_to_remove)
-                break
-        
-        iteration += 1 
+        # Remove the node with the lowest degree from the shortest edge if possible
+        if not trim_node(complete_graph, pq, removed_nodes):
+            break
+        iteration += 1
     
     # Final plot
-    filename = plot_current_graph(trimmed_graph, iteration, plot_seed, show_edge_labels=True)
+    filename = plot_current_graph(complete_graph, iteration, plot_seed, show_edge_labels=True)
     if plot_iterations:
         filenames.append(filename)
         create_gif(filenames)
@@ -359,7 +394,7 @@ def trim_network_to_n_nodes(matrix, accessions, N, plot_iterations, plot_seed=12
         for filename in filenames:
             os.remove(filename)
 
-    clusters = list(nx.connected_components(trimmed_graph))
+    clusters = list(nx.connected_components(complete_graph))
     representatives = {tuple(cluster): list(cluster) for cluster in clusters}
     
     return representatives
