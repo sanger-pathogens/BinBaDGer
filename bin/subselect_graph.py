@@ -309,18 +309,20 @@ def build_network_to_n_nodes(matrix, accessions, N, seed_edge=None, plot_iterati
     return representatives
 
 
-def trim_network_to_n_nodes(matrix, accessions, N, plot_iterations=True, plot_seed=123):
-    # Build complete network
-    G = build_network(matrix, accessions)
+def trim_network_to_n_nodes(matrix, accessions, N, plot_iterations, plot_seed=123, ):
+    G = nx.Graph()
 
+    num_nodes = len(matrix)
+
+    accession_map = {i: accessions[i] for i in range(num_nodes)}
+    
     # Use a priority queue (min heap) to store the edges
     pq = []
     for i in range(num_nodes):
         for j in range(i + 1, num_nodes):
             weight = matrix[i, j]
-            pq.append((weight, accession_map[i], accession_map[j]))
-    
-    heapq.heapify(pq)
+            heapq.heappush(pq, (weight, accession_map[i], accession_map[j]))
+            G.add_edge(accession_map[i], accession_map[j], weight=weight)
 
     if len(G.nodes) <= N:
         plot_current_graph(G, 0, plot_seed, show_edge_labels=True)
@@ -330,7 +332,7 @@ def trim_network_to_n_nodes(matrix, accessions, N, plot_iterations=True, plot_se
     removed_nodes = set()
     iteration = 0
     filenames = []
-
+    
     while len(trimmed_graph.nodes) > N:
         if plot_iterations:
             filename = plot_current_graph(trimmed_graph, iteration, plot_seed)
@@ -359,7 +361,7 @@ def trim_network_to_n_nodes(matrix, accessions, N, plot_iterations=True, plot_se
 
     clusters = list(nx.connected_components(trimmed_graph))
     representatives = {tuple(cluster): list(cluster) for cluster in clusters}
-
+    
     return representatives
 
 ### umap/HDBSCAN_based ###
