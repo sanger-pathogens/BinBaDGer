@@ -325,9 +325,9 @@ def trim_node(
     bool true if it can remove a node otherwise false otherwise
     """
     while pq:
-        weight, node1, node2 = pq.pop()
+        weight, node1, node2 = heapq.heappop(pq) #pop smallest
         if node1 not in removed_nodes and node2 not in removed_nodes:
-            node_to_remove = node1 if trimmed_graph.degree(node1) <= trimmed_graph.degree(node2) else node2
+            node_to_remove = node1 if trimmed_graph.degree(node1) <= trimmed_graph.degree(node2) else node2 #could just always be node 1 I don't think this does much
             trimmed_graph.remove_node(node_to_remove)
             removed_nodes.add(node_to_remove)
             return True
