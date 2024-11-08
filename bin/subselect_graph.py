@@ -335,12 +335,13 @@ def trim_node(
     return False
 
 
-def trim_network_to_n_nodes(matrix: np.ndarray, 
-                            accessions: list, 
-                            N: int, 
-                            plot_iterations: bool, 
-                            plot_seed: int = 123
-                            ) -> dict:
+def trim_network_to_n_nodes(
+    matrix: np.ndarray, 
+    accessions: list, 
+    N: int, 
+    plot_iterations: bool, 
+    plot_seed: int = 123
+) -> dict:
     """
     Trim a network matrix to a maximum of N nodes.
     
