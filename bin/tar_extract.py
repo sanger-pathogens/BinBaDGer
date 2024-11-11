@@ -1,9 +1,10 @@
 #!/usr/bin/env python3
 
-import tarfile
-import logging
-from pathlib import Path
 import argparse
+import logging
+import tarfile
+from pathlib import Path
+
 
 # Function to iterate over a batch of TAR files and extract relevant FASTA files
 def iterate_over_batch(asms_fn, selected_rnames):
@@ -11,7 +12,7 @@ def iterate_over_batch(asms_fn, selected_rnames):
 
     Args:
         asms_fn (str): xz-compressed TAR file with FASTA files.
-        selected_rnames (list): Set of selected FASTA files for which a Minimap instance will be created (note: can contain rnames from other batches).
+        selected_rnames (list): Set of selected FASTA files to extract
     Returns:
         (rname (str), rfa (str))
     """
@@ -45,11 +46,13 @@ def save_fasta(rname, rfa):
     with open(filename, "wb") as fasta_file:
         fasta_file.write(rfa)
 
+
 # Helper function to extract sequences from multiple files based on index and save them
 def extract_sequences_from_files(file_list, selected_rnames):
     for tar in file_list:
         for rname, rfa in iterate_over_batch(tar, selected_rnames):
             save_fasta(rname, rfa)
+
 
 # Function to read lists from files
 def read_list_from_file(filepath):
@@ -57,24 +60,28 @@ def read_list_from_file(filepath):
     with open(filepath, "r") as f:
         return [line.strip() for line in f.readlines()]
 
+
 # Argument parser for the script
 def parse_arguments():
     parser = argparse.ArgumentParser(description="Extract FASTA sequences from xz-compressed TAR files.")
 
     parser.add_argument(
-        "-f", "--files",
+        "-f",
+        "--files",
         nargs="+",  # Accept multiple tar.xz files
         required=True,
-        help="List of xz-compressed TAR files to process"
+        help="List of xz-compressed TAR files to process",
     )
 
     parser.add_argument(
-        "-n", "--names",
+        "-n",
+        "--names",
         required=True,
-        help="Text file containing list of selected FASTA file names (without extensions)"
+        help="Text file containing list of selected FASTA file names (without extensions)",
     )
 
     return parser.parse_args()
+
 
 # Example usage
 if __name__ == "__main__":
