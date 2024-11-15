@@ -28,10 +28,6 @@
         }
       },
       "Metadata options": {
-        "publish_metadata": {
-          "default": false,
-          "help_text": "Flag to publish full metadata TSV as downloaded from ENA."
-        },
         "filter_manifest": {
           "default": "",
           "help_text": "Path to filter manifest TSV for filtering samples on metadata."
@@ -124,6 +120,10 @@
       "kraken2_db" : {
           "default": "/data/pam/software/kraken2/k2_standard_16gb_20240904",
           "help_text": "Path to the Kraken2 database"
+      },
+      "publish_metadata": {
+          "default": false,
+          "help_test": "Flag to publish metadata TSV downloaded from ENA."
       }
     }
 }
