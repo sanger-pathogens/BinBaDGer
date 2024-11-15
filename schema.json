@@ -38,7 +38,7 @@
         },
         "save_pre_qc_metadata": {
           "default": false,
-          "help_text": "Flag to output metadata CSV before samples are filtered in QC- this is in addition to the CSV output post QC filtering (if --download_fastq is specified)"
+          "help_text": "Flag to output metadata CSV before samples are filtered during the reads QC stage - this is in addition to the CSV output containing only details of samples that passed filtering based on reads QC (if --download_fastq was specified)"
         },
         "short_metacsv_name": {
           "default": true,
