@@ -123,7 +123,7 @@
       },
       "publish_metadata": {
           "default": false,
-          "help_test": "Flag to publish metadata TSV downloaded from ENA."
+          "help_text": "Flag to publish metadata TSV downloaded from ENA."
       }
     }
 }
