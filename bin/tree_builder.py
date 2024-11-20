@@ -13,12 +13,12 @@ def buildRapidNJ(phylip_path, meta_ID, tree_filename):
     """
 
     # construct tree
-    rapidnj_cmd = "rapidnj " + phylip_path + " -n -i pd -o t -x " + meta_ID + ".raw"
-
-    print(rapidnj_cmd)
+    rapidnj_cmd = [
+        "rapidnj", phylip_path, "-n", "-i", "pd", "-o", "t", "-x", f"{meta_ID}.raw"
+    ]
 
     try:
-        subprocess.run(rapidnj_cmd, shell=True, check=True)
+        subprocess.run(rapidnj_cmd, check=True)
         with open(meta_ID + ".raw", "r") as f, open(tree_filename, "w") as fo:
             for line in f:
                 fo.write(line.replace("'", ""))
