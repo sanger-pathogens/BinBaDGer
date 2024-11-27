@@ -31,7 +31,7 @@ def buildRapidNJ(phylip_path, meta_ID, tree_filename):
 
 
 def generate_phylogeny(phylip_path, meta_ID, tree_suffix, overwrite):
-    """Generate phylogeny using dendropy or RapidNJ"""
+    """Generate phylogeny using RapidNJ"""
 
     tree_filename = f"{meta_ID}.nwk"
     if overwrite or not os.path.isfile(tree_filename):
