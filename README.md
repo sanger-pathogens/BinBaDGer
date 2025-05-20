@@ -32,7 +32,7 @@ Sketchlib is used again to calculate ANI distances between the samples in each b
 
 ##### 6. Downloading FASTQs and QC (optional)
 
-Paired FASTQs for selected samples will be downloaded using the FTP links in the ENA metadata. The [QC pipeline](./assorted-sub-workflows/qc/README.md) is run and FASTQs are only output for samples that pass both FastQC and kraken2bracken given specified criteria. There is an option to output all FASTQs if required.
+Paired FASTQs for selected samples will be downloaded using the FTP links in the ENA metadata. The [QC pipeline](./assorted-sub-workflows/qc/README.md) is run and FASTQs are only output for samples that pass specified criteria in relation to both FastQC and Kraken2/Bracken analyses. There is an option to output all FASTQ files if required.
 
 ##### Tree building (optional)
 

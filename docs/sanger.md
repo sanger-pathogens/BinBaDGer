@@ -12,5 +12,5 @@ module load ISG/singularity
 Then you can run the pipeline with bsub. We recommend using the oversubscribed queue and requesting 4GB memory, for example:
 
 ```
-bsub -q oversubscribed -R "select[mem>4000] rusage[mem=4000]" -M4000 -o dataset_generator.o -e dataset_generator.e nextflow run path/to/repo/main.nf --manifest manifest.csv
+bsub -q oversubscribed -J binbadger -R "select[mem>4000] rusage[mem=4000]" -M4000 -o binbadger.%J.o -e binbadger.%J.e nextflow run path/to/repo/main.nf --manifest manifest.csv
 ```
