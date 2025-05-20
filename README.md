@@ -16,7 +16,6 @@ A COBS indexed dataset is searched for genomes that match each reference within 
 
 ##### 2. Metadata download/filtering
 
-TODO CHANGE LINK BELOW TO PUBLIC BEFORE RELEASE
 Metadata for the selected samples is downloaded from the ENA with the [enadownloader](https://github.com/sanger-pathogens/enadownloader) tool. This metadata TSV can be optionally published. Samples are filtered based on any specified filters and any duplicates are removed (only first occurrence of each sample kept).
 
 ##### 3. Sketching and ANI calculation
