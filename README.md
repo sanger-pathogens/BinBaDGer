@@ -42,7 +42,10 @@ Assemblies for the (filtered) COBS matches are extracted from the provided direc
 
 1. Install [Nextflow](https://www.nextflow.io/docs/latest/install.html) and [Docker](https://docs.docker.com/engine/install/).
 
-2. Clone the repo.
+2. Clone the repo using `--recurse-submodules`:
+   ```
+   git clone --recurse-submodules https://github.com/sanger-pathogens/BinBaDGer.git
+   ```
 
 ## Input
 
