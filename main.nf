@@ -208,6 +208,8 @@ workflow {
 
         read_ch
         | QC
+
+        QC.out.binbadger_pass_fail
         | filter { it[1] == 'pass' && it[2] == 'pass' }
         | map { it -> it[0] } //only keep meta
         | ifEmpty { error("Error: All samples failed QC") }
