@@ -198,8 +198,8 @@ workflow {
         | filter { it.fastq_ftp.contains(';') } //if its paired its seperated by a semi-colon
         | map{ merged_meta ->
             def (read1_ftp, read2_ftp) = merged_meta.fastq_ftp.split(';')
-            def read1_ftp_url = "ftp://${read1_ftp}"
-            def read2_ftp_url = "ftp://${read2_ftp}"
+            def read1_ftp_url = "https://${read1_ftp}"
+            def read2_ftp_url = "https://${read2_ftp}"
             [ merged_meta, read1_ftp_url, read2_ftp_url ]
         }
         | DOWNLOAD_FASTQS
