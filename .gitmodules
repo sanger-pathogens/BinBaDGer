@@ -1,6 +1,3 @@
-[submodule "lib"]
-	path = lib
-	url = ../nextflowtool.git
 [submodule "assorted-sub-workflows"]
 	path = assorted-sub-workflows
 	url = ../assorted-sub-workflows.git
