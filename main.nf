@@ -17,7 +17,7 @@ def printHelp() {
     NextflowTool.help_message("${workflow.ProjectDir}/schema.json",
                             ["${workflow.ProjectDir}/assorted-sub-workflows/qc/schema.json",
                              "${workflow.ProjectDir}/assorted-sub-workflows/kraken2bracken/schema.json",
-                             "${workflow.ProjectDir}/assorted-sub-workflows/combined_input/ena_downloader_schema.json"],
+                             "${workflow.ProjectDir}/assorted-sub-workflows/mixed_input/ena_downloader_schema.json"],
                             params.monochrome_logs, log)
 }
 
@@ -40,9 +40,10 @@ include { PLOT_ANI; SUBSELECT_GRAPH                                             
 include { DOWNLOAD_FASTQS; PUBLISH_FASTQS } from './modules/fastqs.nf'
 
 //from assorted-sub-workflows
-include { DOWNLOAD_METADATA                                                                          } from './assorted-sub-workflows/combined_input/modules/ena_downloader.nf'
-include { FILTER_METADATA                                                                            } from './assorted-sub-workflows/combined_input/modules/filter_metadata.nf'
-include { METADATA; METADATA as PUBLISH_FULL_METADATA                                                        } from './assorted-sub-workflows/irods_extractor/modules/metadata_save.nf'
+include { DOWNLOAD_METADATA                                                                          } from './assorted-sub-workflows/mixed_input/modules/ena_downloader.nf'
+include { FILTER_METADATA                                                                            } from './assorted-sub-workflows/mixed_input/modules/filter_metadata.nf'
+include { METADATA; METADATA as PUBLISH_FULL_METADATA                                                } from './assorted-sub-workflows/irods_extractor/modules/metadata_save.nf'
+include { RETRIEVE_CRAM; RETRIEVE_FASTQ                                                              } from './assorted-sub-workflows/irods_extractor/modules/retrieve.nf'
 
 //
 // SUBWORKFLOWS
