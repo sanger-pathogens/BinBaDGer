@@ -5,6 +5,8 @@ process EXTRACT_ASSEMBLYS_FROM_TAR {
     label "time_30m"
 
     container 'quay.io/sangerpathogens/python_graphics:1.1.3'
+    publishDir "${params.outdir}/extracted_assemblies/", mode: 'copy', pattern: '*.fasta', enabled: params.output_assemblies
+
 
     input:
     tuple val(meta), path(matches), path(tar_file)

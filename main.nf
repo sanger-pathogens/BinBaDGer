@@ -230,9 +230,19 @@ workflow {
     optional extras
     */
 
+    // Output assemblies
+    if (params.output_assemblies && !params.generate_tree) { // Avoids running process twice if building a tree
+        channel.fromPath("${params.assembly_base}/${params.index_prefix}*.xz")
+        | set { species_assembly_ch }
+
+        ready_cobs_matches.combine(species_assembly_ch)
+        | EXTRACT_ASSEMBLYS_FROM_TAR
+    }
+
     //build a core genome tree for all samples (requires extraction of assemblies)
     if (params.generate_tree) {
         BUILD_TREE(ready_cobs_matches, query_sketch)
     }
+    
 }
 
