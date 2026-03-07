@@ -222,6 +222,10 @@ nextflow run main.nf --manifest path/to/manifest.tsv --cobs_base path/to/cobs/in
             default: false
             Output all downloaded FastQ files regardless of QC.
 
+      --output_assemblies
+            default: false
+            Output the assemblies.
+
 -----------------------------------------------------------------
  Logging options
       --monochrome_logs

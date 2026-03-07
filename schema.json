@@ -103,6 +103,10 @@
         "output_all_fastqs": {
           "default": false,
           "help_text": "Output all downloaded FastQ files regardless of QC."
+        },
+        "output_assemblies": {
+          "default": false,
+          "help_text": "Output the assemblies."
         }
       },
       "Logging options": {
