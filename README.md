@@ -142,80 +142,80 @@ results/
 
 **COBS search options**
 
-| Option | Type | Default | Description |
-| --- | --- | --- | --- |
-| `--manifest` | `path` | (required) | Input manifest CSV with header `ID,assembly`. |
-| `--cobs_base` | `path` | `/data/pam/collections/all_the_bacteria/0.2/indexes/phylign` | Base directory for COBS index files. |
-| `--cobs_threshold` | `float` | `0.8` | Coverage threshold for COBS search. |
-| `--selection_method` | `string` | `top` | Candidate selection method: `top`, `stepwise`, or `random`. |
-| `--index_prefix` | `string` | `""` | Restrict search to COBS indexes matching this prefix (e.g. a species name). Also restricts TAR file prefix for tree building. |
-| `--number_of_cobs_matches` | `integer` | `100000` | Maximum number of COBS matches to retrieve. |
+| Option                     | Type      | Default                                                      | Description                                                                                                                   |
+| -------------------------- | --------- | ------------------------------------------------------------ | ----------------------------------------------------------------------------------------------------------------------------- |
+| `--manifest`               | `path`    | (required)                                                   | Input manifest CSV with header `ID,assembly`.                                                                                 |
+| `--cobs_base`              | `path`    | `/data/pam/collections/all_the_bacteria/0.2/indexes/phylign` | Base directory for COBS index files.                                                                                          |
+| `--cobs_threshold`         | `float`   | `0.8`                                                        | Coverage threshold for COBS search.                                                                                           |
+| `--selection_method`       | `string`  | `top`                                                        | Candidate selection method: `top`, `stepwise`, or `random`.                                                                   |
+| `--index_prefix`           | `string`  | `""`                                                         | Restrict search to COBS indexes matching this prefix (e.g. a species name). Also restricts TAR file prefix for tree building. |
+| `--number_of_cobs_matches` | `integer` | `100000`                                                     | Maximum number of COBS matches to retrieve.                                                                                   |
 
 ---
 
 **Metadata options**
 
-| Option | Type | Default | Description |
-| --- | --- | --- | --- |
-| `--filter_manifest` | `path` | `""` | TSV file for filtering samples on ENA metadata columns. |
-| `--publish_metadata` | `boolean` | `false` | Publish the ENA metadata TSV for all selected samples. |
+| Option                   | Type      | Default | Description                                                                                    |
+| ------------------------ | --------- | ------- | ---------------------------------------------------------------------------------------------- |
+| `--filter_manifest`      | `path`    | `""`    | TSV file for filtering samples on ENA metadata columns.                                        |
+| `--publish_metadata`     | `boolean` | `false` | Publish the ENA metadata TSV for all selected samples.                                         |
 | `--save_pre_qc_metadata` | `boolean` | `false` | Output metadata CSV before FASTQ QC filtering (recommended when not using `--download_fastq`). |
-| `--short_metacsv_name` | `boolean` | `true` | Remove full timestamp from metadata CSV filenames. |
+| `--short_metacsv_name`   | `boolean` | `true`  | Remove full timestamp from metadata CSV filenames.                                             |
 
 ---
 
 **Sketching and binning options**
 
-| Option | Type | Default | Description |
-| --- | --- | --- | --- |
-| `--sketchlib_db` | `path` | `/data/pam/collections/all_the_bacteria/0.2/indexes/sketchlib/atb_sketchlib_v020` | Path to the Sketchlib database. |
-| `--bin_ranges` | `string` | `0.98,0.99,0.995,0.998,1` | Comma-separated bin edges as ANI similarity values (e.g. `0.98` = within 2% distance). |
-| `--retain_below_bins` | `boolean` | `false` | Retain samples that fall below all bins (too distant from reference). |
+| Option                | Type      | Default                                                                           | Description                                                                            |
+| --------------------- | --------- | --------------------------------------------------------------------------------- | -------------------------------------------------------------------------------------- |
+| `--sketchlib_db`      | `path`    | `/data/pam/collections/all_the_bacteria/0.2/indexes/sketchlib/atb_sketchlib_v020` | Path to the Sketchlib database.                                                        |
+| `--bin_ranges`        | `string`  | `0.98,0.99,0.995,0.998,1`                                                         | Comma-separated bin edges as ANI similarity values (e.g. `0.98` = within 2% distance). |
+| `--retain_below_bins` | `boolean` | `false`                                                                           | Retain samples that fall below all bins (too distant from reference).                  |
 
 ---
 
 **Bin de-replication options**
 
-| Option | Type | Default | Description |
-| --- | --- | --- | --- |
-| `--dereplicate_bins` | `boolean` | `true` | De-replicate each bin to a representative set. |
-| `--cluster_method` | `string` | `network_based_trim` | De-replication method: `network_based_trim` or `edge_based`. |
-| `--representatives` | `integer` | `10` | Number of representatives to select per bin. |
-| `--make_gif` | `boolean` | `false` | Create GIF visualisation of network trimming (network_based_trim only). |
+| Option               | Type      | Default              | Description                                                             |
+| -------------------- | --------- | -------------------- | ----------------------------------------------------------------------- |
+| `--dereplicate_bins` | `boolean` | `true`               | De-replicate each bin to a representative set.                          |
+| `--cluster_method`   | `string`  | `network_based_trim` | De-replication method: `network_based_trim` or `edge_based`.            |
+| `--representatives`  | `integer` | `10`                 | Number of representatives to select per bin.                            |
+| `--make_gif`         | `boolean` | `false`              | Create GIF visualisation of network trimming (network_based_trim only). |
 
 ---
 
 **FASTQ download and QC options**
 
-| Option | Type | Default | Description |
-| --- | --- | --- | --- |
-| `--download_fastq` | `boolean` | `false` | Download FASTQs from ENA and run QC for selected samples. |
-| `--output_all_fastqs` | `boolean` | `false` | Output all downloaded FASTQs regardless of QC result. |
-| `--kraken2_db` | `path` | `/data/pam/software/kraken2/k2_standard_16gb_20240904` | Path to Kraken2 database. |
-| `--read_len` | `integer` | `null` | Expected read length (required for Bracken when `--download_fastq` is set). |
-| `--genus_abundance_threshold` | `float` | `90` | Minimum top-genus abundance (%) to pass QC. |
-| `--species_abundance_threshold` | `float` | `85` | Minimum top-species abundance (%) to pass QC. |
-| `--classification_level` | `string` | `S` | Bracken taxonomic rank: `D`, `P`, `C`, `O`, `F`, `G`, or `S`. |
+| Option                          | Type      | Default                                                | Description                                                                 |
+| ------------------------------- | --------- | ------------------------------------------------------ | --------------------------------------------------------------------------- |
+| `--download_fastq`              | `boolean` | `false`                                                | Download FASTQs from ENA and run QC for selected samples.                   |
+| `--output_all_fastqs`           | `boolean` | `false`                                                | Output all downloaded FASTQs regardless of QC result.                       |
+| `--kraken2_db`                  | `path`    | `/data/pam/software/kraken2/k2_standard_16gb_20240904` | Path to Kraken2 database.                                                   |
+| `--read_len`                    | `integer` | `null`                                                 | Expected read length (required for Bracken when `--download_fastq` is set). |
+| `--genus_abundance_threshold`   | `float`   | `90`                                                   | Minimum top-genus abundance (%) to pass QC.                                 |
+| `--species_abundance_threshold` | `float`   | `85`                                                   | Minimum top-species abundance (%) to pass QC.                               |
+| `--classification_level`        | `string`  | `S`                                                    | Bracken taxonomic rank: `D`, `P`, `C`, `O`, `F`, `G`, or `S`.               |
 
 ---
 
 **Tree building options**
 
-| Option | Type | Default | Description |
-| --- | --- | --- | --- |
-| `--generate_tree` | `boolean` | `false` | Build a neighbour-joining tree with RapidNJ from the selected assemblies. |
-| `--assembly_base` | `path` | `/data/pam/collections/all_the_bacteria/0.2/assembly/` | Base directory of xz-compressed TAR archives containing assembly FASTAs. |
-| `--trim_tree` | `boolean` | `false` | Prune the tree to `--number_of_leaves` leaves with Treemmer. |
-| `--number_of_leaves` | `integer` | `10` | Number of leaves to retain when trimming. |
+| Option               | Type      | Default                                                | Description                                                               |
+| -------------------- | --------- | ------------------------------------------------------ | ------------------------------------------------------------------------- |
+| `--generate_tree`    | `boolean` | `false`                                                | Build a neighbour-joining tree with RapidNJ from the selected assemblies. |
+| `--assembly_base`    | `path`    | `/data/pam/collections/all_the_bacteria/0.2/assembly/` | Base directory of xz-compressed TAR archives containing assembly FASTAs.  |
+| `--trim_tree`        | `boolean` | `false`                                                | Prune the tree to `--number_of_leaves` leaves with Treemmer.              |
+| `--number_of_leaves` | `integer` | `10`                                                   | Number of leaves to retain when trimming.                                 |
 
 ---
 
 **Output options**
 
-| Option | Type | Default | Description |
-| --- | --- | --- | --- |
-| `--outdir` | `path` | `./results` | Directory where results are written. |
-| `--monochrome_logs` | `boolean` | `false` | Output logs in plain ASCII. |
+| Option              | Type      | Default     | Description                          |
+| ------------------- | --------- | ----------- | ------------------------------------ |
+| `--outdir`          | `path`    | `./results` | Directory where results are written. |
+| `--monochrome_logs` | `boolean` | `false`     | Output logs in plain ASCII.          |
 
 ### Advanced usage
 
@@ -285,16 +285,16 @@ All software dependencies are containerised. When using `--download_fastq true` 
 
 ## Software versions
 
-| Software | Version | Image |
-| --- | --- | --- |
-| COBS | 0.3.0 | `quay.io/biocontainers/cobs:0.3.0--hdcf5f25_1` |
-| Sketchlib | 0.1.2 | `quay.io/ssd28/experimental/pp-sketchlib-rust:0.1.2_sd28_fix` |
-| RapidNJ | 2.3.2 | `quay.io/ssd28/experimental/rapidnj:2.3.2-c1` |
-| Treemmer | — | `quay.io/sangerpathogens/treemmer:a3a1632` |
-| Kraken2 | 2.1.3 | `quay.io/biocontainers/kraken2:2.1.3--pl5321hdcf5f25_0` |
-| Bracken | 2.8 | `quay.io/biocontainers/bracken:2.8--py310h0dbaff4_1` |
-| FastQC | 0.12.1 | `quay.io/biocontainers/fastqc:0.12.1--hdfd78af_0` |
-| enadownloader | v2.3.3 | `quay.io/sangerpathogens/enadownloader:v2.3.3-903be379` |
+| Software      | Version | Image                                                         |
+| ------------- | ------- | ------------------------------------------------------------- |
+| COBS          | 0.3.0   | `quay.io/biocontainers/cobs:0.3.0--hdcf5f25_1`                |
+| Sketchlib     | 0.1.2   | `quay.io/ssd28/experimental/pp-sketchlib-rust:0.1.2_sd28_fix` |
+| RapidNJ       | 2.3.2   | `quay.io/ssd28/experimental/rapidnj:2.3.2-c1`                 |
+| Treemmer      | —       | `quay.io/sangerpathogens/treemmer:a3a1632`                    |
+| Kraken2       | 2.1.3   | `quay.io/biocontainers/kraken2:2.1.3--pl5321hdcf5f25_0`       |
+| Bracken       | 2.8     | `quay.io/biocontainers/bracken:2.8--py310h0dbaff4_1`          |
+| FastQC        | 0.12.1  | `quay.io/biocontainers/fastqc:0.12.1--hdfd78af_0`             |
+| enadownloader | v2.3.3  | `quay.io/sangerpathogens/enadownloader:v2.3.3-903be379`       |
 
 See `modules/` and `assorted-sub-workflows/` for pinned container versions.
 
