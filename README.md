@@ -31,7 +31,7 @@ The pipeline runs up to seven steps:
 1. Clone this repository (including submodules):
 
    ```bash
-   git clone --recurse-submodules https://github.com/sanger-pathogens/BinBaDGer.git
+   git clone --recurse-submodules <repo-url>
    cd BinBaDGer
    ```
 
