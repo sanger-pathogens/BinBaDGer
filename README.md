@@ -111,31 +111,39 @@ Results are written to `--outdir` (default: `./results`):
 
 ```
 results/
-  <bin_range>/                         # e.g. 0.2-0.0%, 0.5-0.2%
-    <SAMPLE_ACCESSION>/
-      fastqs/                          # Downloaded FASTQs (if --download_fastq)
+  metadata_chosen_samples_<date>.csv   # Metadata for samples passing all filters
   bins/
     <reference_ID>/
       <reference_ID>_binned.tsv        # ANI distances and bin assignments
       <reference_ID>_binning.log
+  plots/
+    <reference_ID>/
+      *.png                            # ANI histogram, boxplot, violin, heatmap plots
   clusters/
     <reference_ID>/
       <bin>/
         representatives.txt            # Selected representative accessions
-        network_iteration_*.png        # Clustering visualisation
-  plots/
+        network_iteration_*.png        # Clustering visualisation (if --cluster_method network_based_trim)
+        *.gif                          # Clustering GIF (if --make_gif)
+  tree/
     <reference_ID>/
-      ani_histogram.png
-      ani_boxplot.png
-      ani_violinplot.png
-      ani_heatmap.png
-  metadata_chosen_samples_<date>.csv   # Metadata for samples passing all filters
+      *.nwk                            # Neighbour-joining tree (if --generate_tree)
+      *.png                            # Tree plot
+  trimmed_tree/
+    <reference_ID>/
+      *.nwk_trimmed_*                  # Pruned tree (if --trim_tree)
+  <bin_range>/                         # e.g. 0.2-0.0%, 0.5-0.2%
+    <SAMPLE_ACCESSION>/
+      fastqs/                          # Per-bin FASTQs for QC-passing samples (if --download_fastq)
+  <SAMPLE_ACCESSION>/
+    fastqs/                            # Downloaded FASTQs (if --output_all_fastqs)
+    fastqqc/                           # FastQC ZIP reports (if --save_fastqc)
+    kraken2/                           # Kraken2 reports (if --download_fastq)
+    bracken/                           # Bracken abundance estimates and MPA reports (if --download_fastq)
   abundance_summary/
-    bracken_summary_report.tsv         # Kraken2/Bracken summary (if --download_fastq)
-  <SAMPLE_ACCESSION>/                  # Per-sample QC output (if --download_fastq)
-    fastqc/
-    kraken2/
-    bracken/
+    bracken_summary_report.tsv         # Multi-sample Bracken abundance summary (if --download_fastq)
+  bracken_build/
+    *.kmer_distrib                     # Bracken k-mer distribution (built if not present in DB)
 ```
 
 ### Parameters
