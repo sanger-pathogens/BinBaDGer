@@ -225,6 +225,13 @@ results/
 | Option              | Type      | Default     | Description                          |
 | ------------------- | --------- | ----------- | ------------------------------------ |
 | `--outdir`          | `path`    | `./results` | Directory where results are written. |
+
+---
+
+**Logging options**
+
+| Option              | Type      | Default     | Description                          |
+| ------------------- | --------- | ----------- | ------------------------------------ |
 | `--monochrome_logs` | `boolean` | `false`     | Output logs in plain ASCII.          |
 
 ### Advanced usage
