@@ -15,7 +15,7 @@
 The pipeline runs up to seven steps:
 
 1. **COBS search** — each reference is searched against the COBS-indexed genome database to retrieve candidate matches above a coverage threshold; candidates are ranked and selected by `--selection_method` (top, stepwise, or random).
-2. **Metadata download and filtering** — ENA metadata for selected samples is downloaded with [enadownloader](https://github.com/sanger-pathogens/enadownloader); samples are optionally filtered by user-supplied column-level criteria (`--filter_manifest`).
+2. **Metadata download and filtering** — ENA metadata for selected samples is downloaded with [enadownloader](https://github.com/sanger-pathogens/enadownloader); samples are optionally filtered by user-supplied column-level criteria (`--filter_manifest`). In the case of duplicates, only the first occurence is retained.
 3. **Sketching and ANI calculation** — Sketchlib calculates pairwise ANI distances between each reference and its candidate matches using the pre-built sketch database.
 4. **ANI plotting and binning** — samples are assigned to configurable ANI distance bins; histogram, boxplot, violin and heatmap plots are generated per reference.
 5. **Bin de-replication** (optional, on by default) — Sketchlib calculates within-bin pairwise ANI and a representative set is selected per bin using network-based or edge-based clustering.
