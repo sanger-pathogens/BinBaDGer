@@ -18,9 +18,16 @@ The pipeline runs up to seven steps:
 2. **Metadata download and filtering** — ENA metadata for selected samples is downloaded with [enadownloader](https://github.com/sanger-pathogens/enadownloader); samples are optionally filtered by user-supplied column-level criteria (`--filter_manifest`). In the case of duplicates, only the first occurence is retained.
 3. **Sketching and ANI calculation** — Sketchlib calculates pairwise ANI distances between each reference and its candidate matches using the pre-built sketch database.
 4. **ANI plotting and binning** — samples are assigned to configurable ANI distance bins; histogram, boxplot, violin and heatmap plots are generated per reference.
-5. **Bin de-replication** (optional, on by default) — Sketchlib calculates within-bin pairwise ANI and a representative set is selected per bin using network-based or edge-based clustering.
+5. **Bin de-replication** (optional, on by default) — Sketchlib calculates within-bin pairwise ANI and a representative set is selected per bin (See [Bin Dereplication Methods](#bin-dereplication-methods))
 6. **FASTQ download and QC** (optional) — paired FASTQs are downloaded from ENA; FastQC and Kraken2/Bracken QC is applied; only samples passing thresholds are retained (unless `--output_all_fastqs` is set).
 7. **Tree building** (optional) — assemblies are extracted from xz-compressed TAR archives; a distance matrix is built with Sketchlib and a neighbour-joining tree is constructed with RapidNJ; optionally pruned with Treemmer.
+
+### Bin Dereplication Methods
+One of the following methods can be applied to select representatives per bin (using `--cluster_method`):
+
+**Network-based Trim** - Builds a complete network from all pairwise distances and iteratively removes the most similar (shortest-edge) node until N representatives remain. Best used when you want a fixed number of maximally diverse representatives.
+
+**Edge-based** - Constructs a network using only edges below a distance threshold, then detects communities within the resulting graph. Representatives are selected as the most central members of each community.
 
 ## Usage
 
