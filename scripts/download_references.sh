@@ -29,7 +29,8 @@ for i in "${!dl_accessions[@]}"; do
   species="${sanitized_species[i]}"
   accession_dir="${outdir}/${species}/${accession}"
   mkdir -p "${accession_dir}"
-  mv ${tmp_dir}/ncbi_dataset/data/${accession}/*.{fna,jsonl} ${accession_dir}
+  find "${tmp_dir}/ncbi_dataset/data/${accession}/" \( -name "*.fna" -o -name "*.jsonl" \) \
+    -exec mv {} "${accession_dir}" \;
 done
 
 rm -r ncbi_dataset.zip "${tmp_dir}"
