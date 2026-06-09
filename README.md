@@ -65,7 +65,9 @@ Load Nextflow and Singularity:
 module load nextflow ISG/singularity
 ```
 
-The AllTheBacteria COBS indexes, Sketchlib database, and assemblies are pre-configured as defaults for `--cobs_base`, `--sketchlib_db`, and `--assembly_base`. A Kraken2 database is also available at the default path. Submit to LSF:
+The AllTheBacteria COBS indexes, Sketchlib database, and assemblies are pre-configured as defaults for `--cobs_base`, `--sketchlib_db`, and `--assembly_base`. A Kraken2 database is also available at the default path.
+
+Submit to LSF:
 
 ```bash
 bsub -q oversubscribed -J binbadger \
@@ -318,7 +320,7 @@ See `modules/` and `assorted-sub-workflows/` for pinned container versions.
 ## Troubleshooting
 
 - **COBS search returns too few matches**: lower `--cobs_threshold`, increase `--number_of_cobs_matches`, or remove `--index_prefix` to search all indexes. Top tip: use `-resume` after changing these parameters to make use of cached processes.
-- **Pipeline too slow**: Reduce number of matches returned by the COBS search with the `--number_of_cobs_matches` parameter.
+- **Pipeline too slow**: Reduce number of matches returned by the COBS search with the `--number_of_cobs_matches` parameter, which is set high by default to return all matches.
 - **Bracken QC fails**: ensure `--read_len` is set and `--kraken2_db` points to a valid database. Kraken2 databases can be downloaded from [here](https://benlangmead.github.io/aws-indexes/k2).
 - **Tree building fails**: ensure `--assembly_base` points to a directory of xz-compressed TAR archives using ENA sample accessions, and that `--index_prefix` matches the archive filename prefixes if set.
 - **Resuming a failed run**: add `-resume` to restart from cached intermediate results.
