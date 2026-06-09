@@ -150,6 +150,27 @@ results/
     *.kmer_distrib                     # Bracken k-mer distribution (built if not present in DB)
 ```
 
+#### Example Outputs
+Bin TSV:
+```
+query   reference   ani ref_ani_bin
+SAMEA2445094    GCF_008369605.1_ASM836960v1_genomic.fna 0.9918759   1.0-0.5%
+SAMEA2445091    GCF_008369605.1_ASM836960v1_genomic.fna 0.9909323   1.0-0.5%
+SAMEA2445101    GCF_008369605.1_ASM836960v1_genomic.fna 0.9918759   1.0-0.5%
+SAMEA2445114    GCF_008369605.1_ASM836960v1_genomic.fna 0.9909323   1.0-0.5%
+SAMEA112667504  GCF_008369605.1_ASM836960v1_genomic.fna 0.9863163   2.0-1.0%
+SAMEA2163122    GCF_008369605.1_ASM836960v1_genomic.fna 0.9909323   1.0-0.5%
+SAMEA2156521    GCF_008369605.1_ASM836960v1_genomic.fna 0.9919179   1.0-0.5%
+```
+
+Cluster Visualisations:
+
+![Example Network](images/example_network.png)
+
+Histogram plot, for a single reference_id:
+
+![Example Histogram](images/example_ani.png)
+
 ### Parameters
 
 **COBS search options**
