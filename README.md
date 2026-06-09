@@ -288,20 +288,6 @@ nextflow run main.nf \
     --outdir my_output
 ```
 
-#### Downloading FASTQs with QC
-
-When `--download_fastq true` is set, you must also supply `--read_len` and ensure `--kraken2_db` points to an accessible database:
-
-```bash
-nextflow run main.nf \
-    --manifest manifest.csv \
-    --download_fastq true \
-    --read_len 150 \
-    --outdir my_output
-```
-
-Kraken2 databases can be downloaded from [here](https://benlangmead.github.io/aws-indexes/k2).
-
 #### Building a phylogenetic tree
 
 Enable tree building to reconstruct a neighbour-joining tree from the selected assemblies:
@@ -313,14 +299,6 @@ nextflow run main.nf \
     --trim_tree true \
     --number_of_leaves 50 \
     --outdir my_output
-```
-
-#### Resuming and iterating
-
-Use `-resume` to restart from Nextflow-cached intermediates. This is especially useful when adjusting filters or bin ranges:
-
-```bash
-nextflow run main.nf --manifest manifest.csv --bin_ranges 0.99,0.995,1 --outdir my_output -resume
 ```
 
 ### Dependencies
@@ -352,8 +330,9 @@ See `modules/` and `assorted-sub-workflows/` for pinned container versions.
 - **Bracken QC fails**: ensure `--read_len` is set and `--kraken2_db` points to a valid database. Kraken2 databases can be downloaded from [here](https://benlangmead.github.io/aws-indexes/k2).
 - **Missing bins** Bins within the given ranges may be missing if empty.
 - **Tree building fails**: ensure `--assembly_base` points to a directory of xz-compressed TAR archives using ENA sample accessions, and that `--index_prefix` matches the archive filename prefixes if set.
-- **Resuming a failed run**: add `-resume` to restart from cached intermediate results.
-- For further help, check `.nextflow.log` and the per-process `.command.log` logs in the `work/` directory.
+- **Resuming a failed run**: add `-resume` to restart from cached intermediate results. This is especially useful when adjusting filters or bin ranges.
+
+For further help, check `.nextflow.log` and the per-process `.command.log` logs in the `work/` directory.
 
 Sanger users may find [this page](https://ssg-confluence.internal.sanger.ac.uk/spaces/PaMI/pages/181078206/General+pipeline+info#Generalpipelineinfo-Troubleshootingafailedpipelinerunandsendingabugreport) useful for troubleshooting Nextflow pipeline runs.
 
