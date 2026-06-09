@@ -7,7 +7,7 @@
         "help_text": "Path to the reference manifest CSV."
       },
       "cobs_base": {
-        "default": "/data/pam/collections/all_the_bacteria/0.2/indexes/phylign",
+        "default": "/data/pam/collections/ATB/ATB_phylign/",
         "help_text": "Base directory for COBS indexes."
       },
       "cobs_threshold": {
@@ -43,7 +43,7 @@
     },
     "Sketching options": {
       "sketchlib_db": {
-        "default": "/data/pam/collections/all_the_bacteria/0.2/indexes/sketchlib/atb_sketchlib_v020",
+        "default": "/data/pam/collections/ATB/ATB_sketchlib/atb_sketchlib_v020",
         "help_text": "Path to the Sketchlib database."
       }
     },
@@ -75,7 +75,7 @@
     },
     "Tree building options": {
       "assembly_base": {
-        "default": "/data/pam/collections/all_the_bacteria/0.2/assembly/",
+        "default": "/data/pam/collections/ATB/releases/Bacteria/Assemblies/",
         "help_text": "Base directory for xz-compressed TAR files containing assembly FASTAs, required for tree building"
       },
       "generate_tree": {
@@ -118,7 +118,7 @@
       "help_text": "Flag to publish FastQC output"
     },
     "kraken2_db": {
-      "default": "/data/pam/software/kraken2/k2_standard_16gb_20240904",
+      "default": "/data/pam/software/kraken2/standard/k2_standard_20250402",
       "help_text": "Path to the Kraken2 database"
     },
     "publish_metadata": {
