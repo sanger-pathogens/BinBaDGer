@@ -105,6 +105,10 @@ The pipeline requires a COBS index directory and a pre-built Sketchlib database.
 
 On the Sanger HPC, both are pre-configured as defaults.
 
+The assemblies from AllTheBacteria can be downloaded as described in their documentation: https://allthebacteria.org/docs/assemblies/
+
+On the Sanger HPC these are located at the default path for `--assembly_base`.
+
 #### Filter manifest (`--filter_manifest`)
 
 An optional TSV for column-level metadata filtering. Columns: `column`, `filter`, `datatype`. The `filter` value is passed to `pandas.DataFrame.query()`. Example:
@@ -278,7 +282,9 @@ Use `--index_prefix` to restrict the COBS search to a specific taxon (matching t
 
 #### Building a phylogenetic tree
 
-Enable tree building to reconstruct a neighbour-joining tree from the selected assemblies:
+Enable tree building to reconstruct a neighbour-joining tree from the selected assemblies.
+
+For this you must have the assemblies on disk and supply the base directory to `--assembly_base` (pre-configured for Sanger users). AllTheBacteria describes how to download assemblies in their documentation: https://allthebacteria.org/docs/assemblies/
 
 
 ### Dependencies
