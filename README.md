@@ -157,7 +157,7 @@ results/
 | Option                     | Type      | Default                                                      | Description                                                                                                                   |
 | -------------------------- | --------- | ------------------------------------------------------------ | ----------------------------------------------------------------------------------------------------------------------------- |
 | `--manifest`               | `path`    | (required)                                                   | Input manifest CSV with header `ID,assembly`.                                                                                 |
-| `--cobs_base`              | `path`    | `/data/pam/collections/all_the_bacteria/0.2/indexes/phylign` | Base directory for COBS index files.                                                                                          |
+| `--cobs_base`              | `path`    | `/data/pam/collections/ATB/ATB_phylign/` | Base directory for COBS index files.                                                                                          |
 | `--cobs_threshold`         | `float`   | `0.8`                                                        | Coverage threshold for COBS search.                                                                                           |
 | `--selection_method`       | `string`  | `top`                                                        | Candidate selection method: `top`, `stepwise`, or `random`.                                                                   |
 | `--index_prefix`           | `string`  | `""`                                                         | Restrict search to COBS indexes matching this prefix (e.g. a species name). Also restricts TAR file prefix for tree building. |
@@ -180,7 +180,7 @@ results/
 
 | Option                | Type      | Default                                                                           | Description                                                                            |
 | --------------------- | --------- | --------------------------------------------------------------------------------- | -------------------------------------------------------------------------------------- |
-| `--sketchlib_db`      | `path`    | `/data/pam/collections/all_the_bacteria/0.2/indexes/sketchlib/atb_sketchlib_v020` | Path to the Sketchlib database.                                                        |
+| `--sketchlib_db`      | `path`    | `/data/pam/collections/ATB/ATB_sketchlib/atb_sketchlib_v020` | Path to the Sketchlib database including the prefix of the .skm/.skd files.                                                        |
 | `--bin_ranges`        | `string`  | `0.98,0.99,0.995,0.998,1`                                                         | Comma-separated bin edges as ANI similarity values (e.g. `0.98` = within 2% distance). |
 | `--retain_below_bins` | `boolean` | `false`                                                                           | Retain samples that fall below all bins (too distant from reference).                  |
 
@@ -203,7 +203,7 @@ results/
 | ------------------------------- | --------- | ------------------------------------------------------ | --------------------------------------------------------------------------- |
 | `--download_fastq`              | `boolean` | `false`                                                | Download FASTQs from ENA and run QC for selected samples.                   |
 | `--output_all_fastqs`           | `boolean` | `false`                                                | Output all downloaded FASTQs regardless of QC result.                       |
-| `--kraken2_db`                  | `path`    | `/data/pam/software/kraken2/k2_standard_16gb_20240904` | Path to Kraken2 database.                                                   |
+| `--kraken2_db`                  | `path`    | `/data/pam/software/kraken2/standard/k2_standard_20250402` | Path to Kraken2 database.                                                   |
 | `--read_len`                    | `integer` | `null`                                                 | Expected read length (required for Bracken when `--download_fastq` is set). |
 | `--genus_abundance_threshold`   | `float`   | `90`                                                   | Minimum top-genus abundance (%) to pass QC.                                 |
 | `--species_abundance_threshold` | `float`   | `85`                                                   | Minimum top-species abundance (%) to pass QC.                               |
@@ -216,7 +216,7 @@ results/
 | Option               | Type      | Default                                                | Description                                                               |
 | -------------------- | --------- | ------------------------------------------------------ | ------------------------------------------------------------------------- |
 | `--generate_tree`    | `boolean` | `false`                                                | Build a neighbour-joining tree with RapidNJ from the selected assemblies. |
-| `--assembly_base`    | `path`    | `/data/pam/collections/all_the_bacteria/0.2/assembly/` | Base directory of xz-compressed TAR archives containing assembly FASTAs.  |
+| `--assembly_base`    | `path`    | `/data/pam/collections/ATB/releases/Bacteria/Assemblies/` | Base directory of xz-compressed TAR archives containing assembly FASTAs.  |
 | `--trim_tree`        | `boolean` | `false`                                                | Prune the tree to `--number_of_leaves` leaves with Treemmer.              |
 | `--number_of_leaves` | `integer` | `10`                                                   | Number of leaves to retain when trimming.                                 |
 
