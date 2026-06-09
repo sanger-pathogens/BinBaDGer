@@ -268,38 +268,18 @@ Histogram plot, for a single reference_id:
 
 #### Selecting samples without downloading FASTQs
 
-By default the pipeline terminates after de-replication and outputs the binned metadata CSV. Use `--save_pre_qc_metadata true` to get a CSV of all selected samples before any FASTQ download or QC:
+By default the pipeline terminates after de-replication and outputs the binned metadata CSV. Use `--save_pre_qc_metadata true` to get a CSV of all selected samples before any FASTQ download or QC.
 
-```bash
-nextflow run main.nf \
-    --manifest manifest.csv \
-    --save_pre_qc_metadata true \
-    --outdir my_output
-```
 
 #### Restricting to a species COBS index
 
-Use `--index_prefix` to restrict the COBS search to a specific taxon (matching the index filename prefix):
+Use `--index_prefix` to restrict the COBS search to a specific taxon (matching the index filename prefix) for example `--index_prefix streptococcus_pneumoniae`.
 
-```bash
-nextflow run main.nf \
-    --manifest manifest.csv \
-    --index_prefix streptococcus_pneumoniae \
-    --outdir my_output
-```
 
 #### Building a phylogenetic tree
 
 Enable tree building to reconstruct a neighbour-joining tree from the selected assemblies:
 
-```bash
-nextflow run main.nf \
-    --manifest manifest.csv \
-    --generate_tree true \
-    --trim_tree true \
-    --number_of_leaves 50 \
-    --outdir my_output
-```
 
 ### Dependencies
 
