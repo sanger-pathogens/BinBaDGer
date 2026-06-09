@@ -23,6 +23,7 @@ The pipeline runs up to seven steps:
 7. **Tree building** (optional) — assemblies are extracted from xz-compressed TAR archives; a distance matrix is built with Sketchlib and a neighbour-joining tree is constructed with RapidNJ; optionally pruned with Treemmer.
 
 ### Bin Dereplication Methods
+
 One of the following methods can be applied to select representatives per bin (using `--cluster_method`):
 
 **Network-based Trim** - Builds a complete network from all pairwise distances and iteratively removes the most similar (shortest-edge) node until N representatives remain. Best used when you want a fixed number of maximally diverse representatives.
@@ -162,7 +163,9 @@ results/
 ```
 
 #### Example Outputs
+
 Bin TSV:
+
 ```
 query   reference   ani ref_ani_bin
 SAMEA2445094    GCF_008369605.1_ASM836960v1_genomic.fna 0.9918759   1.0-0.5%
@@ -186,14 +189,14 @@ Histogram plot, for a single reference_id:
 
 **COBS search options**
 
-| Option                     | Type      | Default                                                      | Description                                                                                                                   |
-| -------------------------- | --------- | ------------------------------------------------------------ | ----------------------------------------------------------------------------------------------------------------------------- |
-| `--manifest`               | `path`    | (required)                                                   | Input manifest CSV with header `ID,assembly`.                                                                                 |
-| `--cobs_base`              | `path`    | `/data/pam/collections/ATB/ATB_phylign/` | Base directory for COBS index files.                                                                                          |
-| `--cobs_threshold`         | `float`   | `0.8`                                                        | Coverage threshold for COBS search.                                                                                           |
-| `--selection_method`       | `string`  | `top`                                                        | Candidate selection method. `top`: top N matches based on coverage, `stepwise`: return N evenly spaced matches chosen randomly, or `random`: N random matches, to capture diversity in a small set. Set N with `--number_of_cobs_matches`. A set seed ensures reproducibility.                                                                   |
-| `--index_prefix`           | `string`  | `""`                                                         | Restrict search to COBS indexes matching this prefix (e.g. a species name). Also restricts TAR file prefix for tree building. |
-| `--number_of_cobs_matches` | `integer` | `100000`                                                     | Maximum number of COBS matches to retrieve.                                                                                   |
+| Option                     | Type      | Default                                  | Description                                                                                                                                                                                                                                                                    |
+| -------------------------- | --------- | ---------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| `--manifest`               | `path`    | (required)                               | Input manifest CSV with header `ID,assembly`.                                                                                                                                                                                                                                  |
+| `--cobs_base`              | `path`    | `/data/pam/collections/ATB/ATB_phylign/` | Base directory for COBS index files.                                                                                                                                                                                                                                           |
+| `--cobs_threshold`         | `float`   | `0.8`                                    | Coverage threshold for COBS search.                                                                                                                                                                                                                                            |
+| `--selection_method`       | `string`  | `top`                                    | Candidate selection method. `top`: top N matches based on coverage, `stepwise`: return N evenly spaced matches chosen randomly, or `random`: N random matches, to capture diversity in a small set. Set N with `--number_of_cobs_matches`. A set seed ensures reproducibility. |
+| `--index_prefix`           | `string`  | `""`                                     | Restrict search to COBS indexes matching this prefix (e.g. a species name). Also restricts TAR file prefix for tree building.                                                                                                                                                  |
+| `--number_of_cobs_matches` | `integer` | `100000`                                 | Maximum number of COBS matches to retrieve.                                                                                                                                                                                                                                    |
 
 ---
 
@@ -210,11 +213,11 @@ Histogram plot, for a single reference_id:
 
 **Sketching and binning options**
 
-| Option                | Type      | Default                                                                           | Description                                                                            |
-| --------------------- | --------- | --------------------------------------------------------------------------------- | -------------------------------------------------------------------------------------- |
-| `--sketchlib_db`      | `path`    | `/data/pam/collections/ATB/ATB_sketchlib/atb_sketchlib_v020` | Path to the Sketchlib database including the prefix of the .skm/.skd files.                                                        |
-| `--bin_ranges`        | `string`  | `0.98,0.99,0.995,0.998,1`                                                         | Comma-separated bin edges as ANI similarity values (e.g. `0.98` = within 2% distance). |
-| `--retain_below_bins` | `boolean` | `false`                                                                           | Retain samples that fall below all bins (too distant from reference).                  |
+| Option                | Type      | Default                                                      | Description                                                                            |
+| --------------------- | --------- | ------------------------------------------------------------ | -------------------------------------------------------------------------------------- |
+| `--sketchlib_db`      | `path`    | `/data/pam/collections/ATB/ATB_sketchlib/atb_sketchlib_v020` | Path to the Sketchlib database including the prefix of the .skm/.skd files.            |
+| `--bin_ranges`        | `string`  | `0.98,0.99,0.995,0.998,1`                                    | Comma-separated bin edges as ANI similarity values (e.g. `0.98` = within 2% distance). |
+| `--retain_below_bins` | `boolean` | `false`                                                      | Retain samples that fall below all bins (too distant from reference).                  |
 
 ---
 
@@ -231,42 +234,42 @@ Histogram plot, for a single reference_id:
 
 **FASTQ download and QC options**
 
-| Option                          | Type      | Default                                                | Description                                                                 |
-| ------------------------------- | --------- | ------------------------------------------------------ | --------------------------------------------------------------------------- |
-| `--download_fastq`              | `boolean` | `false`                                                | Download FASTQs from ENA and run QC for selected samples.                   |
-| `--output_all_fastqs`           | `boolean` | `false`                                                | Output all downloaded FASTQs regardless of QC result.                       |
+| Option                          | Type      | Default                                                    | Description                                                                 |
+| ------------------------------- | --------- | ---------------------------------------------------------- | --------------------------------------------------------------------------- |
+| `--download_fastq`              | `boolean` | `false`                                                    | Download FASTQs from ENA and run QC for selected samples.                   |
+| `--output_all_fastqs`           | `boolean` | `false`                                                    | Output all downloaded FASTQs regardless of QC result.                       |
 | `--kraken2_db`                  | `path`    | `/data/pam/software/kraken2/standard/k2_standard_20250402` | Path to Kraken2 database.                                                   |
-| `--read_len`                    | `integer` | `null`                                                 | Expected read length (required for Bracken when `--download_fastq` is set). |
-| `--genus_abundance_threshold`   | `float`   | `90`                                                   | Minimum top-genus abundance (%) to pass QC.                                 |
-| `--species_abundance_threshold` | `float`   | `85`                                                   | Minimum top-species abundance (%) to pass QC.                               |
-| `--classification_level`        | `string`  | `S`                                                    | Bracken taxonomic rank: `D`, `P`, `C`, `O`, `F`, `G`, or `S`.               |
+| `--read_len`                    | `integer` | `null`                                                     | Expected read length (required for Bracken when `--download_fastq` is set). |
+| `--genus_abundance_threshold`   | `float`   | `90`                                                       | Minimum top-genus abundance (%) to pass QC.                                 |
+| `--species_abundance_threshold` | `float`   | `85`                                                       | Minimum top-species abundance (%) to pass QC.                               |
+| `--classification_level`        | `string`  | `S`                                                        | Bracken taxonomic rank: `D`, `P`, `C`, `O`, `F`, `G`, or `S`.               |
 
 ---
 
 **Tree building options**
 
-| Option               | Type      | Default                                                | Description                                                               |
-| -------------------- | --------- | ------------------------------------------------------ | ------------------------------------------------------------------------- |
-| `--generate_tree`    | `boolean` | `false`                                                | Build a neighbour-joining tree with RapidNJ from the selected assemblies. |
+| Option               | Type      | Default                                                   | Description                                                               |
+| -------------------- | --------- | --------------------------------------------------------- | ------------------------------------------------------------------------- |
+| `--generate_tree`    | `boolean` | `false`                                                   | Build a neighbour-joining tree with RapidNJ from the selected assemblies. |
 | `--assembly_base`    | `path`    | `/data/pam/collections/ATB/releases/Bacteria/Assemblies/` | Base directory of xz-compressed TAR archives containing assembly FASTAs.  |
-| `--trim_tree`        | `boolean` | `false`                                                | Prune the tree to `--number_of_leaves` leaves with Treemmer.              |
-| `--number_of_leaves` | `integer` | `10`                                                   | Number of leaves to retain when trimming.                                 |
+| `--trim_tree`        | `boolean` | `false`                                                   | Prune the tree to `--number_of_leaves` leaves with Treemmer.              |
+| `--number_of_leaves` | `integer` | `10`                                                      | Number of leaves to retain when trimming.                                 |
 
 ---
 
 **Output options**
 
-| Option              | Type      | Default     | Description                          |
-| ------------------- | --------- | ----------- | ------------------------------------ |
-| `--outdir`          | `path`    | `./results` | Directory where results are written. |
+| Option     | Type   | Default     | Description                          |
+| ---------- | ------ | ----------- | ------------------------------------ |
+| `--outdir` | `path` | `./results` | Directory where results are written. |
 
 ---
 
 **Logging options**
 
-| Option              | Type      | Default     | Description                          |
-| ------------------- | --------- | ----------- | ------------------------------------ |
-| `--monochrome_logs` | `boolean` | `false`     | Output logs in plain ASCII.          |
+| Option              | Type      | Default | Description                 |
+| ------------------- | --------- | ------- | --------------------------- |
+| `--monochrome_logs` | `boolean` | `false` | Output logs in plain ASCII. |
 
 ### Advanced usage
 
@@ -274,18 +277,15 @@ Histogram plot, for a single reference_id:
 
 By default the pipeline terminates after de-replication and outputs the binned metadata CSV. Use `--save_pre_qc_metadata true` to get a CSV of all selected samples before any FASTQ download or QC.
 
-
 #### Restricting to a species COBS index
 
 Use `--index_prefix` to restrict the COBS search to a specific taxon (matching the index filename prefix) for example `--index_prefix streptococcus_pneumoniae`.
-
 
 #### Building a phylogenetic tree
 
 Enable tree building to reconstruct a neighbour-joining tree from the selected assemblies.
 
 For this you must have the assemblies on disk and supply the base directory to `--assembly_base` (pre-configured for Sanger users). AllTheBacteria describes how to download assemblies in their documentation: https://allthebacteria.org/docs/assemblies/
-
 
 ### Dependencies
 
