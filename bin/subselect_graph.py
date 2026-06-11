@@ -18,7 +18,7 @@ from sklearn.cluster import HDBSCAN, KMeans
 from sklearn.manifold import MDS
 from sklearn.metrics import silhouette_score
 
-##### methods handling class #####
+# --- Methods-handling class ---
 
 
 class ClusteringMethods:
@@ -55,7 +55,7 @@ class ClusteringMethods:
         return method(*method_args, *method_optional_args)
 
 
-##### input parsing functions #####
+# --- Input parsing functions ---
 
 
 def read_phylip_distance(phylip_file):
@@ -78,9 +78,9 @@ def read_phylip_distance(phylip_file):
     return num_samples, accessions, matrix
 
 
-##### clustering functions #####
+# --- Clustering functions ---
 
-### hierarchy ###
+# Hierarchy
 
 
 def hierarchy_cluster(matrix, accessions, num_clusters=3, plot_clusters=True, method="average"):
@@ -110,7 +110,7 @@ def plot_dendogram(Z, accessions, output_file):
     plt.close()
 
 
-### kmeans ###
+# Kmeans
 
 
 def kmeans_cluster(matrix):
@@ -174,7 +174,7 @@ def optimal_number_of_clusters(matrix, max_clusters=30):
     return X_transformed, optimal_k
 
 
-### edge_based ###
+# Edge_based
 
 
 def edge_based_cluster(matrix, accessions, threshold, N=3, dissimilarity=True):
@@ -224,7 +224,7 @@ def edge_based_cluster(matrix, accessions, threshold, N=3, dissimilarity=True):
     return representatives
 
 
-### Network trimming ###
+# Network based trim
 
 
 def get_edges_to_subgraph(G, node, subgraph_nodes):
@@ -416,7 +416,7 @@ def trim_network_to_n_nodes(
     return representatives
 
 
-### umap/HDBSCAN_based ###
+# UMAP/HDBSCAN based
 
 
 def umap_clustering(matrix):
@@ -451,7 +451,7 @@ def umap_clustering(matrix):
     return clustered
 
 
-###### result plotting functions ######
+# --- Result plotting functions ---
 
 
 def plot_umap(matrix, labels, output_file):
@@ -558,7 +558,7 @@ def plot_current_graph(G, iteration, plot_seed, show_edge_labels=False):
     return filename
 
 
-# ###### cluster emission functions ######
+# --- Cluster emission functions ---
 
 
 def save_clusters(transformed_matrix, labels, filename="cluster_assignments.csv"):

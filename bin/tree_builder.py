@@ -13,9 +13,7 @@ def buildRapidNJ(phylip_path, meta_ID, tree_filename):
     """
 
     # construct tree
-    rapidnj_cmd = [
-        "rapidnj", phylip_path, "-n", "-i", "pd", "-o", "t", "-x", f"{meta_ID}.raw"
-    ]
+    rapidnj_cmd = ["rapidnj", phylip_path, "-n", "-i", "pd", "-o", "t", "-x", f"{meta_ID}.raw"]
 
     try:
         subprocess.run(rapidnj_cmd, check=True)

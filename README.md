@@ -4,272 +4,119 @@
 [![run with docker](https://img.shields.io/badge/run%20with-docker-0db7ed?labelColor=000000&logo=docker)](https://www.docker.com/)
 [![run with singularity](https://img.shields.io/badge/run%20with-singularity-1d355c.svg?labelColor=000000)](https://sylabs.io/docs/)
 
-BinBaDGer (**Bin**ned **Ba**cterial **D**ataset **Ge**nerato**r**) is a Nextflow pipeline that generates a dataset of genomes from [AllTheBacteria](https://allthebacteria.readthedocs.io/en/latest/) (or another [COBS](https://github.com/iqbal-lab-org/cobs) indexed and [sketched](https://github.com/bacpop/pp-sketchlib) set of genomes) based on specific requirements.
+[[_TOC_]]
 
-![pipeline_flowchart_png](./images/pipeline.svg)
+## Pipeline overview
 
-### Steps
+**BinBaDGer** (**Bin**ned **Ba**cterial **D**ataset **Ge**nerato**r**) is a Nextflow DSL2 pipeline that generates a curated dataset of genomes from [AllTheBacteria](https://allthebacteria.readthedocs.io/en/latest/) (or any other [COBS](https://github.com/iqbal-lab-org/cobs)-indexed and [sketched](https://github.com/bacpop/pp-sketchlib) genome collection) based on user-defined ANI distance criteria relative to one or more reference sequences.
 
-##### 1. COBS search
+![pipeline_flowchart](./images/pipeline.svg)
 
-A COBS indexed dataset is searched for genomes that match each reference within the provided coverage threshold. The search can be restricted to indexes with a certain prefix (e.g. species). The specified number of matches are then chosen based on the provided selection method (options detailed below).
+The pipeline runs up to seven steps:
 
-##### 2. Metadata download/filtering
+1. **COBS search** — each reference is searched against the COBS-indexed genome database to retrieve candidate matches above a coverage threshold; candidates are ranked and selected by `--selection_method` (top, stepwise, or random).
+2. **Metadata download and filtering** — ENA metadata for selected samples is downloaded with [enadownloader](https://github.com/sanger-pathogens/enadownloader); samples are optionally filtered by user-supplied column-level criteria (`--filter_manifest`). In the case of duplicates, only the first occurence is retained.
+3. **Sketching and ANI calculation** — Sketchlib calculates pairwise ANI distances between each reference and its candidate matches using the pre-built sketch database.
+4. **ANI plotting and binning** — samples are assigned to configurable ANI distance bins; histogram, boxplot, violin and heatmap plots are generated per reference.
+5. **Bin de-replication** (optional, on by default) — Sketchlib calculates within-bin pairwise ANI and a representative set is selected per bin (See [Bin Dereplication Methods](#bin-dereplication-methods))
+6. **FASTQ download and QC** (optional) — paired FASTQs are downloaded from ENA; FastQC and Kraken2/Bracken QC is applied; only samples passing thresholds are retained (unless `--output_all_fastqs` is set).
+7. **Tree building** (optional) — assemblies are extracted from xz-compressed TAR archives; a distance matrix is built with Sketchlib and a neighbour-joining tree is constructed with RapidNJ; optionally pruned with Treemmer.
 
-Metadata for the selected samples is downloaded from the ENA with the [enadownloader](https://github.com/sanger-pathogens/enadownloader) tool. This metadata TSV can be optionally published. Samples are filtered based on any specified filters and any duplicates are removed (only first occurrence of each sample kept).
+### Bin Dereplication Methods
 
-##### 3. Sketching and ANI calculation
+One of the following methods can be applied to select representatives per bin (using `--cluster_method`):
 
-Sketchlib is used for efficient calculation of ANI. A sketch of size 1024 with k-mer sizes 3, 17 and 35 is created for the reference and this is used with the pre-generated sketch database of the dataset to calculate the distances between the reference and corresponding samples using k-mer size 17.
+**Network-based Trim** - Builds a complete network from all pairwise distances and iteratively removes the most similar (shortest-edge) node until N representatives remain. Best used when you want a fixed number of maximally diverse representatives.
 
-##### 4. ANI plotting and binning
-
-Various plots (histogram, boxplot, violin plot, heatmap) are generated to visualise the ANI distances from the reference. By default, the samples are placed in bins of 0.2%, 0.5%, 1% and 2% distance from the reference, but these bins can be customised. Optionally, an additional bin can be created for samples that don't fall in the specified bins (i.e. their distance from the reference is too great).
-
-##### 5. Bin de-replication (optional)
-
-Sketchlib is used again to calculate ANI distances between the samples in each bin using k-mer size 17. A distance matrix is generated based on this and clusters are then generated and visualised using the specified method (options detailed below).
-
-##### 6. Downloading FASTQs and QC (optional)
-
-Paired FASTQs for selected samples will be downloaded using the FTP links in the ENA metadata. The [QC pipeline](./assorted-sub-workflows/qc/README.md) is run and FASTQs are only output for samples that pass specified criteria in relation to both FastQC and Kraken2/Bracken analyses. There is an option to output all FASTQ files if required.
-
-##### Tree building (optional)
-
-Assemblies for the (filtered) COBS matches are extracted from the provided directory of xz-compressed TAR files. A sketch of size 1024 with k-mer sizes 3, 17 and 35 is created for the assemblies and this is used with the reference sketch to calculate ANI distances. A distance matrix is created and this is used to build the phylogenetic tree with [rapidNJ](https://github.com/somme89/rapidNJ), which is output in newick format and plot as a PNG. Optionally, [Treemmer](https://github.com/fmenardo/Treemmer) can be used to trim the tree to the specified number of leaves and this is output to a separate newick file.
-
-## Installation
-
-1. Install [Nextflow](https://www.nextflow.io/docs/latest/install.html) and [Docker](https://docs.docker.com/engine/install/).
-
-2. Clone the repo using `--recurse-submodules`:
-   ```
-   git clone --recurse-submodules https://github.com/sanger-pathogens/BinBaDGer.git
-   ```
-
-## Input
-
-The pipeline has a few required inputs:
-1. An input manifest whose structure is outlined [here](#manifest)
-2. A [COBS](https://github.com/iqbal-lab-org/cobs) index and [sketch](https://github.com/bacpop/pp-sketchlib) of a genome database, described [here](#genome-database)
-
-Pipeline options, e.g. `--download_fastq`, may require you to supply additional inputs, such as a Kraken2 database (see [Usage](#usage) for further details).
+**Edge-based** - Constructs a network using only edges below a distance threshold, then detects communities within the resulting graph. Representatives are selected as the most central members of each community.
 
 ## Usage
 
-```
-nextflow run main.nf --manifest path/to/manifest.tsv --cobs_base path/to/cobs/index/dir --sketchlib_db path/to/sketchlib/database
-```
+### Quickstart
 
-> See [here](./docs/sanger.md) if running on the Sanger HPC (farm)
+#### From source code
 
-### All parameters
+1. Clone this repository (including submodules):
 
-```
- FastQC
-      --save_fastqc
-            default: true
-            Flag to publish FastQC output
-      --fastqc_pass_criteria
-            default: assorted-sub-workflows/qc/assets/fastqc_pass_criteria.json
-            JSON file containing definition of an array specifying which items in the FastQC summary.txt are required to have the value PASS for the sample to be considered a pass
-      --fastqc_no_fail_criteria
-            default: assorted-sub-workflows/qc/assets/fastqc_no_fail_criteria.json
-            JSON file containing definition of an array specifying which items in the FastQC summary.txt are required to NOT have the value FAIL for the sample to be considered a pass (i.e. they could have WARN)
------------------------------------------------------------------
- kraken2bracken QC
-      --genus_abundance_threshold
-            default: 90
-            Fail the sample if the top genus abundance is lower than this
-      --species_abundance_threshold
-            default: 85
-            Fail the sample if the top species abundance is lower than this
------------------------------------------------------------------
- kraken2bracken options
-      --kraken2_db
-            default: /data/pam/software/kraken2/k2_standard_16gb_20240904
-            Path to the Kraken2 database
-      --kraken2_threads
-            default: 4
-            Number of threads for Kraken2
-      --bracken_threads
-            default: 10
-            Number of threads for Bracken
-      --kmer_len
-            default: 35
-            K-mer length for Bracken
-      --read_len
-            default: null
-            Ideal length of reads in sample
-      --classification_level
-            default: S
-            Taxonomic rank to analyze for Bracken (Options: 'D', 'P', 'C', 'O', 'F', 'G', 'S')
-      --threshold
-            default: 10
-            Minimum number of reads required for a classification at the specified rank
-      --get_classified_reads
-            default: false
-            Flag to determine whether to retrieve classified reads
-      --enable_building
-            default: false
-            Include this flag to enable automatic building of kraken2 db if not found on disc
------------------------------------------------------------------
- ENA Downloader options
-      --publish_metadata
-            default: false
-            Flag to publish metadata TSV downloaded from ENA.
------------------------------------------------------------------
- COBS search options
-      --manifest
-            default:
-            Path to the reference manifest CSV.
+   ```bash
+   git clone --recurse-submodules <repo-url>
+   cd BinBaDGer
+   ```
 
-      --cobs_base
-            default: /data/pam/collections/all_the_bacteria/0.2/indexes/phylign
-            Base directory for COBS indexes.
+2. To run with `docker`, use the `-profile docker` option:
 
-      --cobs_threshold
-            default: 0.8
-            Coverage threshold for COBS search.
+   ```bash
+   nextflow run main.nf \
+       -profile docker \
+       --manifest manifest.csv \
+       --cobs_base /path/to/cobs/indexes \
+       --sketchlib_db /path/to/sketchlib/db \
+       --outdir my_output
+   ```
 
-      --selection_method
-            default: top
-            Method for sample selection; options are stepwise, random, or top.
+   Other profiles are also supported (`singularity`).  
+   :warning: If no profile is specified the pipeline will run with the Sanger HPC-specific configuration.
 
-      --index_prefix
-            default:
-            Limit the COBS search to indexes that have this prefix, also restricts prefix of TAR files when extracting assemblies for tree building
+3. Once the run has finished successfully and you have inspected the output, clean up intermediate files. The `work/` directory and `.nextflow.log` are useful for troubleshooting — do not delete them until you are satisfied the outputs are correct:
 
-      --number_of_cobs_matches
-            default: 100000
-            Number of matches to limit COBS search to.
+   ```bash
+   rm -rf work .nextflow*
+   ```
 
------------------------------------------------------------------
- Metadata options
-      --filter_manifest
-            default:
-            Path to filter manifest TSV for filtering samples on metadata.
+   Alternatively, use `nextflow clean` for more fine-grained control over which runs and intermediate files are removed.
 
-      --save_pre_qc_metadata
-            default: false
-            Flag to output metadata CSV before samples are filtered during the reads QC stage - this is in addition to the CSV output containing only details of samples that passed filtering based on reads QC (if --download_fastq was specified)
+#### Using on the Sanger farm
 
-      --short_metacsv_name
-            default: true
-            Remove full timestamp from metadata CSV filename(s).
+Load Nextflow and Singularity:
 
------------------------------------------------------------------
- Sketching options
-      --sketchlib_db
-            default: /data/pam/collections/all_the_bacteria/0.2/indexes/sketchlib/atb_sketchlib_v020
-            Path to the Sketchlib database.
-
------------------------------------------------------------------
- Bin de-replication options
-      --bin_ranges
-            default: '0.98,0.99,0.995,0.998,1'
-            Comma-separated list of bin edges, e.g., '0.98,0.99,0.995,0.998,1'.
-
-      --retain_below_bins
-            default: false
-            Flag to keep samples that fall below bins.
-
-      --dereplicate_bins
-            default: true
-            Flag to dereplicate bins.
-
-      --cluster_method
-            default: network_based_trim
-            Clustering method to use for samples in each bin; options are network_based_trim or edge_based.
-
-      --representatives
-            default: 10
-            Number of representatives to select from each bin.
-
-      --make_gif
-            default: false
-            Flag to create GIF visualization for choosing representatives when using network_based clustering method.
-
------------------------------------------------------------------
- Tree building options
-      --assembly_base
-            default: /data/pam/collections/all_the_bacteria/0.2/assembly/
-            Base directory for xz-compressed TAR files containing assembly FASTAs, required for tree building
-
-      --generate_tree
-            default: false
-            Generate a tree with RapidNJ.
-
-      --trim_tree
-            default: false
-            Use Treemmer to subset the tree.
-
-      --number_of_leaves
-            default: 10
-            Number of leaves to retain if trimming the tree.
-
------------------------------------------------------------------
- Output options
-      --outdir
-            default: ./results
-            Directory to save results.
-
-      --download_fastq
-            default: false
-            Download FastQ files for samples (if available) and run QC.
-
-      --output_all_fastqs
-            default: false
-            Output all downloaded FastQ files regardless of QC.
-
------------------------------------------------------------------
- Logging options
-      --monochrome_logs
-            default: false
-            Display logs in monochrome mode.
-
------------------------------------------------------------------
+```bash
+module load nextflow ISG/singularity
 ```
 
-#### Manifest
+The AllTheBacteria COBS indexes, Sketchlib database, and assemblies are pre-configured as defaults for `--cobs_base`, `--sketchlib_db`, and `--assembly_base`. A Kraken2 database is also available at the default path.
 
-Should contain a unique ID and path for each reference to query against the COBS database.
+Submit to LSF:
 
-Example:
+```bash
+bsub -q oversubscribed -J binbadger \
+    -R "select[mem>4000] rusage[mem=4000]" -M4000 \
+    -o binbadger.%J.o -e binbadger.%J.e \
+    nextflow run main.nf \
+        --manifest manifest.csv \
+        --outdir my_output
+```
+
+### Input
+
+#### Manifest (`--manifest`)
+
+A CSV file with a unique ID and path to a reference assembly for each query:
 
 ```
 ID,assembly
-streptococcus_pneumoniae,/path/to/streptococcus_pneumoniae_reference.fa
+streptococcus_pneumoniae,/path/to/reference.fa
 ```
 
-#### Genome Database
+#### Genome database (`--cobs_base`, `--sketchlib_db`)
 
-The following links provide the necessary input files (for options `--cobs_base` and `--sketchlib_db`) to use for the AllTheBacteria dataset:
+The pipeline requires a COBS index directory and a pre-built Sketchlib database.
 
-- [COBS indexes](https://ftp.ebi.ac.uk/pub/databases/AllTheBacteria/Releases/0.2/indexes/phylign/)
-- [Sketchlib database](https://ftp.ebi.ac.uk/pub/databases/AllTheBacteria/Releases/0.2/indexes/sketchlib/)
-- [Assemblies](https://allthebacteria.readthedocs.io/en/latest/assemblies.html#downloading-assemblies)
+For AllTheBacteria (v0.2), these are available at:
 
-Further information on the use of sketchlib for sketching a custom dataset can be found [here](./docs/sketchlib.md).
+- COBS indexes: `https://ftp.ebi.ac.uk/pub/databases/AllTheBacteria/Releases/0.2/indexes/phylign/`
+- Sketchlib database: `https://ftp.ebi.ac.uk/pub/databases/AllTheBacteria/Releases/0.2/indexes/sketchlib/`
 
-Please note that when using a custom dataset, COBS index files must be created in a similar manner to the AllTheBacteria dataset, **using ENA sample accessions**. To see the expected structure of an index, inspect a COBS index file. E.g.
+On the Sanger HPC, both are pre-configured as defaults.
 
-```
-$ xzcat /data/pam/collections/all_the_bacteria/0.2/indexes/phylign/yersinia_pestis__01.cobs_classic.xz | head -n 4
-COBS:CLASSIC_INDEX�@\�aawaohihnluveketmnjrgzwmnbbrwouhryqtiesg_SAMN16047905
-abmyucaxofezqiajwxuwtwiveucrrwbthdeapzxm_SAMN04567809
-abvnsvaoixbnjdmnhnjbvzdsiikcnkforajczokf_SAMN04567817
-abzzrunezeptksvturyoktkgyetwshbpyeptehmp_SAMN04567816
-```
+The assemblies from AllTheBacteria can be downloaded as described in their documentation: https://allthebacteria.org/docs/assemblies/
 
-#### Filter manifest
+On the Sanger HPC these are located at the default path for `--assembly_base`.
 
-TSV file providing a number of per-column filters (while ensuring that columns are correctly interpreted with a given type). The TSV has the following columns:
-- **column**: name of the column the filter applies to\; there should only be one row per column
-- **filter**: filter to be applied to the column, which is a string that could be passed to [`pandas.DataFrame.query()`](https://pandas.pydata.org/docs/reference/api/pandas.DataFrame.query.html)
-- **datatype**: expected datatype for values in the column, either `int`, `float`, `datetime`, `bool` or `str` (use other types at your peril i.e. anything you can use as dtype in [`pandas.DataFrame.astype()`](https://pandas.pydata.org/docs/reference/api/pandas.DataFrame.astype.html)) 
+To use a custom database you will likely need to prepare these inputs before running the pipeline - see [Using a custom database](#using-a-custom-database).
 
-Example manifest:
+#### Filter manifest (`--filter_manifest`)
+
+An optional TSV for column-level metadata filtering. Columns: `column`, `filter`, `datatype`. The `filter` value is passed to `pandas.DataFrame.query()`. Example:
 
 ```
 column	filter	datatype
@@ -278,99 +125,50 @@ read_count	"read_count > 2500000"	int
 collection_date	"2012 < collection_date"	datetime
 ```
 
-#### Selection method options
+### Output
 
-* **top**: return top N matches based on coverage
-* **random**: return N matches chosen randomly (seed is set to ensure reproducibility)- only use when you want to capture diversity with a small number of matches
-* **stepwise**: return N evenly spaced matches chosen randomly (seed is set to ensure reproducibility)
-
-#### Cluster method options
-
-* **network_based_trim**: sort edges by distance, iteratively remove one node from edge with lowest weight to end up with chosen number of representatives, plot final network (and optionally create gif)
-* **edge_based**: add edges between samples if distance less than 0.01, find clusters, select 3 representatives in each cluster with lowest centrality, plot clusters with representatives highlighted in red
-
-#### QC
-
-* If you're using the `--download_fastq` parameter and therefore running QC, you will need to set the `--read_len` and `--kraken2_db` parameters. Kraken2 databases can be downloaded [here](https://benlangmead.github.io/aws-indexes/k2).
-
-#### Notes
-
-- To reduce the time it takes to run the pipeline, we advise reducing the number of matches returned from the COBS search with the `--number_of_cobs_matches` parameter.
-- If you are not getting enough samples, you can increase the number of matches or adjust the filters and rerun with the Nextflow `-resume` parameter (so you don't have to run the COBS search and other cached processes again)
-
-## Outputs
+Results are written to `--outdir` (default: `./results`):
 
 ```
-results
-├── 0.2-0.0%
-│   ├── SAMEA112486405
-│   │   └── fastqs
-│   │       ├── SAMEA112486405_1.fastq.gz
-│   │       └── SAMEA112486405_2.fastq.gz
-│   ├── SAMEA112486569
-│   │   └── fastqs
-│   │       ├── SAMEA112486569_1.fastq.gz
-│   │       └── SAMEA112486569_2.fastq.gz
-│   └── SAMEA677742
-│       └── fastqs
-│           ├── SAMEA677742_1.fastq.gz
-│           └── SAMEA677742_2.fastq.gz
-├── 0.5-0.2%
-│   ├── SAMEA2467519
-│   │   └── fastqs
-│   │       ├── SAMEA2467519_1.fastq.gz
-│   │       └── SAMEA2467519_2.fastq.gz
-│   ├── SAMEA3431248
-│   │   └── fastqs
-│   │       ├── SAMEA3431248_1.fastq.gz
-│   │       └── SAMEA3431248_2.fastq.gz
-│   └── SAMEA3431368
-│       └── fastqs
-│           ├── SAMEA3431368_1.fastq.gz
-│           └── SAMEA3431368_2.fastq.gz
-├── abundance_summary
-│   └── bracken_summary_report.tsv
-├── bins
-│   └── streptococcus_pneumoniae
-│       ├── streptococcus_pneumoniae_binned.tsv
-│       └── streptococcus_pneumoniae_binning.log
-├── clusters
-│   └── streptococcus_pneumoniae
-│       ├── 0.2-0.0%
-│       │   ├── network_iteration_24.png
-│       │   └── representatives.txt
-│       └── 0.5-0.2%
-│           ├── network_iteration_0.png
-│           └── representatives.txt
-├── metadata_chosen_samples_2024-11-01.csv
-├── plots
-│   └── streptococcus_pneumoniae
-│       ├── ani_boxplot.png
-│       ├── ani_heatmap.png
-│       ├── ani_histogram.png
-│       └── ani_violinplot.png
-└── SAMEA104141704
-    ├── bracken
-    │   ├── SAMEA104141704.bracken
-    │   ├── SAMEA104141704_kraken_sample_report_bracken_species.tsv
-    │   └── SAMEA104141704_report_bracken_species.mpa.txt
-    ├── fastqqc
-    │   ├── SAMEA104141704_1_fastqc.zip
-    │   └── SAMEA104141704_2_fastqc.zip
-    └── kraken2
-        ├── SAMEA104141704_kraken_report.tsv
-        └── SAMEA104141704_kraken_sample_report.tsv
-    ...
-    Accession-specific directories are created for each chosen accession selected for download
+results/
+  metadata_chosen_samples_<date>.csv   # Metadata for samples passing all filters
+  bins/
+    <reference_ID>/
+      <reference_ID>_binned.tsv        # ANI distances and bin assignments
+      <reference_ID>_binning.log
+  plots/
+    <reference_ID>/
+      *.png                            # ANI histogram, boxplot, violin, heatmap plots
+  clusters/
+    <reference_ID>/
+      <bin>/
+        representatives.txt            # Selected representative accessions
+        network_iteration_*.png        # Clustering visualisation (if --cluster_method network_based_trim)
+        *.gif                          # Clustering GIF (if --make_gif)
+  tree/
+    <reference_ID>/
+      *.nwk                            # Neighbour-joining tree (if --generate_tree)
+      *.png                            # Tree plot
+  trimmed_tree/
+    <reference_ID>/
+      *.nwk_trimmed_*                  # Pruned tree (if --trim_tree)
+  <bin_range>/                         # e.g. 0.2-0.0%, 0.5-0.2%
+    <SAMPLE_ACCESSION>/
+      fastqs/                          # Per-bin FASTQs for QC-passing samples (if --download_fastq)
+  <SAMPLE_ACCESSION>/
+    fastqs/                            # Downloaded FASTQs (if --output_all_fastqs)
+    fastqqc/                           # FastQC ZIP reports (if --save_fastqc)
+    kraken2/                           # Kraken2 reports (if --download_fastq)
+    bracken/                           # Bracken abundance estimates and MPA reports (if --download_fastq)
+  abundance_summary/
+    bracken_summary_report.tsv         # Multi-sample Bracken abundance summary (if --download_fastq)
+  bracken_build/
+    *.kmer_distrib                     # Bracken k-mer distribution (built if not present in DB)
 ```
 
-### More info
+#### Example Outputs
 
-* **bin folders (e.g. 0.2-0.0%, 0.5-0.2%)**: contain FASTQs for the final selected samples for each bin. Some bins may be missing if they do not have any samples.
-
-* **abundance_summary**: if `--download_fastq` is specified, there is a bracken_summary_report.tsv in this folder to summarise kraken2bracken results for all samples that went through QC.
-
-* **bins**: for each reference contains a TSV of ANI distances between the reference and its samples and the assigned bins. There is also a log file for information. Example TSV:
+Bin TSV:
 
 ```
 query   reference   ani ref_ani_bin
@@ -383,10 +181,186 @@ SAMEA2163122    GCF_008369605.1_ASM836960v1_genomic.fna 0.9909323   1.0-0.5%
 SAMEA2156521    GCF_008369605.1_ASM836960v1_genomic.fna 0.9919179   1.0-0.5%
 ```
 
-* **clusters**: if `--dereplicate_bins` is `true` (default), for each reference contains a plot of the network in PNG format (and a gif if `--make_gif` specified) for each bin with more than 1 representative, as well as a text file of chosen representatives. Example plot (for 'network_based_trim' cluster method): ![Network plot](./images/example_network.png)
+Cluster Visualisations:
 
-* **metadata**: If `--publish_metadata` is specified, a TSV of ENA metadata for all samples selected from COBS is output in a `metadata` folder. If `--save_pre_qc_metadata` is specified, there will be a metadata CSV output for the selected samples prior to QC (recommended if you do not specify `--download_fastq` as this will show the chosen samples as a final output). If `--download_fastq` is specified, there will be a CSV of metadata output for all samples that passed QC and are therefore chosen as the final samples (e.g. metadata_chosen_samples_2024-11-01.csv).
+![Example Network](images/example_network.png)
 
-* **plots**: contains plots for each reference to visualise ANI distances between the reference and its samples. Example histogram: ![ANI histogram](./images/example_ani.png)
+Histogram plot, for a single reference_id:
 
-* **sample folders (e.g. SAMEA104141704)**: if `--download_fastq` is specified, there is a folder for each sample that went through QC containing kraken2bracken output and optional FastQC output. The FASTQs will be here too if `--output_all_fastqs` is specified.
+![Example Histogram](images/example_ani.png)
+
+#### Downloading assemblies
+
+In the current version assemblies are not output by the pipeline, though this is an expected development for a future release. Sanger users may use the helper script [download_references.sh](scripts/download_references.sh) which is bundled with the pipeline in the `scripts/` directory.
+
+### Parameters
+
+**COBS search options**
+
+| Option                     | Type      | Default                                  | Description                                                                                                                                                                                                                                                                    |
+| -------------------------- | --------- | ---------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| `--manifest`               | `path`    | (required)                               | Input manifest CSV with header `ID,assembly`.                                                                                                                                                                                                                                  |
+| `--cobs_base`              | `path`    | `/data/pam/software/phylign/ATB/0.2/index_20240507/` | Base directory for COBS index files.                                                                                                                                                                                                                                           |
+| `--cobs_threshold`         | `float`   | `0.8`                                    | Coverage threshold for COBS search.                                                                                                                                                                                                                                            |
+| `--selection_method`       | `string`  | `top`                                    | Candidate selection method. `top`: top N matches based on coverage, `stepwise`: return N evenly spaced matches chosen randomly, or `random`: N random matches, to capture diversity in a small set. Set N with `--number_of_cobs_matches`. A set seed ensures reproducibility. |
+| `--index_prefix`           | `string`  | `""`                                     | Restrict search to COBS indexes matching this prefix (e.g. a species name). Also restricts TAR file prefix for tree building.                                                                                                                                                  |
+| `--number_of_cobs_matches` | `integer` | `100000`                                 | Maximum number of COBS matches to retrieve.                                                                                                                                                                                                                                    |
+
+---
+
+**Metadata options**
+
+| Option                   | Type      | Default | Description                                                                                    |
+| ------------------------ | --------- | ------- | ---------------------------------------------------------------------------------------------- |
+| `--filter_manifest`      | `path`    | `""`    | TSV file for filtering samples on ENA metadata columns.                                        |
+| `--publish_metadata`     | `boolean` | `false` | Publish the ENA metadata TSV for all selected samples.                                         |
+| `--save_pre_qc_metadata` | `boolean` | `false` | Output metadata CSV before FASTQ QC filtering (recommended when not using `--download_fastq`). |
+| `--short_metacsv_name`   | `boolean` | `true`  | Remove full timestamp from metadata CSV filenames.                                             |
+
+---
+
+**Sketching and binning options**
+
+| Option                | Type      | Default                                                      | Description                                                                            |
+| --------------------- | --------- | ------------------------------------------------------------ | -------------------------------------------------------------------------------------- |
+| `--sketchlib_db`      | `path`    | `/data/pam/software/pp-sketchlib/ATB/0.2/index_20240606/atb_sketchlib_v020` | Path to the Sketchlib database including the prefix of the .skm/.skd files.            |
+| `--bin_ranges`        | `string`  | `0.98,0.99,0.995,0.998,1`                                    | Comma-separated bin edges as ANI similarity values (e.g. `0.98` = within 2% distance). |
+| `--retain_below_bins` | `boolean` | `false`                                                      | Retain samples that fall below all bins (too distant from reference).                  |
+
+---
+
+**Bin de-replication options**
+
+| Option               | Type      | Default              | Description                                                             |
+| -------------------- | --------- | -------------------- | ----------------------------------------------------------------------- |
+| `--dereplicate_bins` | `boolean` | `true`               | De-replicate each bin to a representative set.                          |
+| `--cluster_method`   | `string`  | `network_based_trim` | De-replication method: `network_based_trim` or `edge_based`. See [Bin Dereplication Methods](#bin-dereplication-methods) for more info.            |
+| `--representatives`  | `integer` | `10`                 | Number of representatives to select per bin.                            |
+| `--make_gif`         | `boolean` | `false`              | Create GIF visualisation of network trimming (network_based_trim only). |
+
+---
+
+**FASTQ download and QC options**
+
+| Option                          | Type      | Default                                                    | Description                                                                 |
+| ------------------------------- | --------- | ---------------------------------------------------------- | --------------------------------------------------------------------------- |
+| `--download_fastq`              | `boolean` | `false`                                                    | Download FASTQs from ENA and run QC for selected samples.                   |
+| `--output_all_fastqs`           | `boolean` | `false`                                                    | Output all downloaded FASTQs regardless of QC result.                       |
+| `--kraken2_db`                  | `path`    | `/data/pam/software/kraken2/standard/k2_standard_20250402` | Path to Kraken2 database.                                                   |
+| `--read_len`                    | `integer` | `null`                                                     | Expected read length (required for Bracken when `--download_fastq` is set). |
+| `--genus_abundance_threshold`   | `float`   | `90`                                                       | Minimum top-genus abundance (%) to pass QC.                                 |
+| `--species_abundance_threshold` | `float`   | `85`                                                       | Minimum top-species abundance (%) to pass QC.                               |
+| `--classification_level`        | `string`  | `S`                                                        | Bracken taxonomic rank: `D`, `P`, `C`, `O`, `F`, `G`, or `S`.               |
+
+---
+
+**Tree building options**
+
+| Option               | Type      | Default                                                   | Description                                                               |
+| -------------------- | --------- | --------------------------------------------------------- | ------------------------------------------------------------------------- |
+| `--generate_tree`    | `boolean` | `false`                                                   | Build a neighbour-joining tree with RapidNJ from the selected assemblies. |
+| `--assembly_base`    | `path`    | `/data/pam/collections/ATB/releases/Bacteria/Assemblies/` | Base directory of xz-compressed TAR archives containing assembly FASTAs.  |
+| `--trim_tree`        | `boolean` | `false`                                                   | Prune the tree to `--number_of_leaves` leaves with Treemmer.              |
+| `--number_of_leaves` | `integer` | `10`                                                      | Number of leaves to retain when trimming.                                 |
+
+---
+
+**Output options**
+
+| Option     | Type   | Default     | Description                          |
+| ---------- | ------ | ----------- | ------------------------------------ |
+| `--outdir` | `path` | `./results` | Directory where results are written. |
+
+---
+
+**Logging options**
+
+| Option              | Type      | Default | Description                 |
+| ------------------- | --------- | ------- | --------------------------- |
+| `--monochrome_logs` | `boolean` | `false` | Output logs in plain ASCII. |
+
+### Advanced usage
+
+#### Selecting samples without downloading FASTQs
+
+By default the pipeline terminates after de-replication and outputs the binned metadata CSV. Use `--save_pre_qc_metadata true` to get a CSV of all selected samples before any FASTQ download or QC.
+
+#### Restricting to a species COBS index
+
+Use `--index_prefix` to restrict the COBS search to a specific taxon (matching the index filename prefix) for example `--index_prefix streptococcus_pneumoniae`.
+
+#### Building a phylogenetic tree
+
+Enable tree building to reconstruct a neighbour-joining tree from the selected assemblies.
+
+For this you must have the assemblies on disk and supply the base directory to `--assembly_base` (pre-configured for Sanger users). AllTheBacteria describes how to download assemblies in their documentation: https://allthebacteria.org/docs/assemblies/
+
+#### Using a custom database
+If you wish to use your own custom reference genome dataset, COBS index and a Sketchlib sketch of the genomes need to be built ahead of running the BinBaDGer pipeline.
+
+_Indexing assemblies_
+
+Use COBS as per the tool documentation: https://github.com/iqbal-lab-org/cobs
+
+_Sketching your assemblies_
+
+BinBaDGer uses [sketchlib](https://github.com/bacpop/sketchlib.rust) to calculate pairwise ANI distances. You need to build a sketch database from the same genome collection used for your COBS index.
+
+Create a TSV file listing sample names and FASTA paths (tab-separated, no header):
+
+```
+sample_1    /path/to/sample_1.fasta
+sample_2    /path/to/sample_2.fasta
+```
+
+Then sketch your assemblies, matching the AllTheBacteria index parameters:
+
+```bash
+sketchlib sketch -v -o my_db -k 17 -s 1024 -f queries.tsv
+```
+
+This produces `my_db.skm` and `my_db.skd`. Pass the path including the filename prefix to `--sketchlib_db` (e.g. `--sketchlib_db /path/to/my_db`). Both files must be present for distance calculation.
+
+> **Note:** the distributed ATB Sketchlib index uses k=17 and sketch size 1024. Using consistent parameters across your custom database and any subsets is recommended.
+
+### Dependencies
+
+All software dependencies are containerised. When using `--download_fastq true` or `--generate_tree true`, the following additional resources must be accessible:
+
+- **Kraken2 database** (`--kraken2_db`): required when `--download_fastq true`. Pre-configured on the Sanger HPC; can be downloaded externally from [here](https://benlangmead.github.io/aws-indexes/k2).
+- **Assembly archives** (`--assembly_base`): required when `--generate_tree true`. AllTheBacteria assemblies are pre-configured on the Sanger HPC; external users can download from [AllTheBacteria](https://allthebacteria.readthedocs.io/en/latest/assemblies.html#downloading-assemblies).
+
+## Software versions
+
+| Software      | Version | Image                                                         |
+| ------------- | ------- | ------------------------------------------------------------- |
+| COBS          | 0.3.0   | `quay.io/biocontainers/cobs:0.3.0--hdcf5f25_1`                |
+| Sketchlib     | 0.1.2   | `quay.io/ssd28/experimental/pp-sketchlib-rust:0.1.2_sd28_fix` |
+| RapidNJ       | 2.3.2   | `quay.io/ssd28/experimental/rapidnj:2.3.2-c1`                 |
+| Treemmer      | —       | `quay.io/sangerpathogens/treemmer:a3a1632`                    |
+| Kraken2       | 2.1.3   | `quay.io/biocontainers/kraken2:2.1.3--pl5321hdcf5f25_0`       |
+| Bracken       | 2.8     | `quay.io/biocontainers/bracken:2.8--py310h0dbaff4_1`          |
+| FastQC        | 0.12.1  | `quay.io/biocontainers/fastqc:0.12.1--hdfd78af_0`             |
+| enadownloader | v2.3.3  | `quay.io/sangerpathogens/enadownloader:v2.3.3-903be379`       |
+
+See `modules/` and `assorted-sub-workflows/` for pinned container versions.
+
+## Troubleshooting
+
+- **COBS search returns too few matches**: lower `--cobs_threshold`, increase `--number_of_cobs_matches`, or remove `--index_prefix` to search all indexes. Top tip: use `-resume` after changing these parameters to make use of cached processes.
+- **Pipeline too slow**: Reduce number of matches returned by the COBS search with the `--number_of_cobs_matches` parameter, which is set high by default to return all matches.
+- **Bracken QC fails**: ensure `--read_len` is set and `--kraken2_db` points to a valid database. Kraken2 databases can be downloaded from [here](https://benlangmead.github.io/aws-indexes/k2).
+- **Missing bins**: Bins within the given ranges may be missing if empty.
+- **Tree building fails**: ensure `--assembly_base` points to a directory of xz-compressed TAR archives using ENA sample accessions, and that `--index_prefix` matches the archive filename prefixes if set.
+- **Too many genomes after bin dereplication**: If using `--cluster_method edge_based` the issue may be that the distance threshold is not appropriate, however in the current version this is not yet parameterised, try using `--cluster_method network_based_trim` and set `--representatives` instead.
+- **Resuming a failed run**: add `-resume` to restart from cached intermediate results. This is especially useful when adjusting filters or bin ranges.
+
+For further help, check `.nextflow.log` and the per-process `.command.log` logs in the `work/` directory.
+
+Sanger users may find [this page](https://ssg-confluence.internal.sanger.ac.uk/spaces/PaMI/pages/181078206/General+pipeline+info#Generalpipelineinfo-Troubleshootingafailedpipelinerunandsendingabugreport) useful for troubleshooting Nextflow pipeline runs.
+
+## Issues and Contributions
+
+**GitHub users:** if you find an issue with this pipeline, or would like to suggest an improvement, please log an issue or open a pull request on this repository.
+
+**Sanger users:** if you need internal support, you can raise an issue on the PAM Freshservice portal: https://sanger.freshservice.com/support/catalog/items/426

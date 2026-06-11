@@ -8,7 +8,6 @@ from pathlib import Path
 
 import numpy as np
 import pandas as pd
-
 from tree_builder import generate_phylogeny
 
 
@@ -26,9 +25,7 @@ def read_tsv_to_structures(filepath: str) -> tuple[list[str], np.ndarray]:
         - Square numpy array of distance values
     """
     try:
-        df = pd.read_csv(filepath,
-                         sep="\t",
-                         names=["sample", "reference", "ani"])
+        df = pd.read_csv(filepath, sep="\t", names=["sample", "reference", "ani"])
 
         # get the uniques and store them indexed to map to the df
         unique_ids = pd.unique(pd.concat([df["sample"], df["reference"]]))
@@ -52,8 +49,7 @@ def read_tsv_to_structures(filepath: str) -> tuple[list[str], np.ndarray]:
         raise ValueError(f"Error processing TSV file: {str(e)}")
 
 
-def read_tsv_to_core_accession(filepath: str
-                               ) -> tuple[list[str], np.ndarray, np.ndarray]:
+def read_tsv_to_core_accession(filepath: str) -> tuple[list[str], np.ndarray, np.ndarray]:
     """
     Read a TSV file containing pairwise core and accessory distances and
     convert to distance matrices.
@@ -70,12 +66,7 @@ def read_tsv_to_core_accession(filepath: str
     """
     try:
         # Read TSV into DataFrame
-        df = pd.read_csv(filepath,
-                         sep="\t",
-                         names=["sample",
-                                "reference",
-                                "core_dist",
-                                "acc_dist"])
+        df = pd.read_csv(filepath, sep="\t", names=["sample", "reference", "core_dist", "acc_dist"])
 
         # Get unique identifiers while preserving order of first appearance
         unique_ids = pd.unique(pd.concat([df["sample"], df["reference"]]))
@@ -105,9 +96,7 @@ def read_tsv_to_core_accession(filepath: str
         raise ValueError(f"Error processing TSV file: {str(e)}")
 
 
-def generate_phylip_matrix(ref_list: list[str],
-                           matrix: np.ndarray,
-                           meta_id: str) -> str:
+def generate_phylip_matrix(ref_list: list[str], matrix: np.ndarray, meta_id: str) -> str:
     """
     Generate a Phylip format distance matrix file.
 
@@ -120,9 +109,7 @@ def generate_phylip_matrix(ref_list: list[str],
         Absolute path to generated Phylip file
     """
     if len(ref_list) != matrix.shape[0] or matrix.shape[0] != matrix.shape[1]:
-        raise ValueError(
-            "Matrix dimensions do not match reference list length"
-            )
+        raise ValueError("Matrix dimensions do not match reference list length")
 
     output_path = Path(f"{meta_id}_distances.phylip").absolute()
 
@@ -133,8 +120,7 @@ def generate_phylip_matrix(ref_list: list[str],
             for ref, distances in zip(ref_list, matrix):
 
                 # Format distances with consistent precision
-                formatted_distances = " ".join(str(d) if d != 0.0
-                                               else "0.0" for d in distances)
+                formatted_distances = " ".join(str(d) if d != 0.0 else "0.0" for d in distances)
 
                 f.write(f"{ref} {formatted_distances}\n")
 
@@ -147,23 +133,11 @@ def generate_phylip_matrix(ref_list: list[str],
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(description="Process input files")
     parser.add_argument(
-        "-r", "--dist_tsv_path",
-        type=str, required=True,
-        help="Input TSV file with Reference pairwise ANI data"
+        "-r", "--dist_tsv_path", type=str, required=True, help="Input TSV file with Reference pairwise ANI data"
     )
-    parser.add_argument(
-        "--meta_ID",
-        type=str,
-        required=True,
-        help="ID of dataset")
-    parser.add_argument(
-        "--build_tree",
-        action="store_true",
-        help="Option to build tree")
-    parser.add_argument(
-        "--phylip_path",
-        type=str,
-        help="Optional: Pre-generated PHYLIP file path")
+    parser.add_argument("--meta_ID", type=str, required=True, help="ID of dataset")
+    parser.add_argument("--build_tree", action="store_true", help="Option to build tree")
+    parser.add_argument("--phylip_path", type=str, help="Optional: Pre-generated PHYLIP file path")
     parser.add_argument(
         "--core_accession",
         action="store_true",

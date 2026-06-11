@@ -28,10 +28,7 @@ def bin_similarities(df, bins, bin_labels):
 
 def read_tsv(file_path):
     """Reads a TSV file without headers and assigns default column names."""
-    df = pd.read_csv(file_path,
-                     sep="\t",
-                     header=None,
-                     names=["query", "reference", "ani"])
+    df = pd.read_csv(file_path, sep="\t", header=None, names=["query", "reference", "ani"])
     return df
 
 
