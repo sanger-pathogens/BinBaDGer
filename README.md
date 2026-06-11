@@ -99,7 +99,9 @@ streptococcus_pneumoniae,/path/to/reference.fa
 
 #### Genome database (`--cobs_base`, `--sketchlib_db`)
 
-The pipeline requires a COBS index directory and a pre-built Sketchlib database. For AllTheBacteria (v0.2), these are available at:
+The pipeline requires a COBS index directory and a pre-built Sketchlib database.
+
+For AllTheBacteria (v0.2), these are available at:
 
 - COBS indexes: `https://ftp.ebi.ac.uk/pub/databases/AllTheBacteria/Releases/0.2/indexes/phylign/`
 - Sketchlib database: `https://ftp.ebi.ac.uk/pub/databases/AllTheBacteria/Releases/0.2/indexes/sketchlib/`
@@ -109,6 +111,8 @@ On the Sanger HPC, both are pre-configured as defaults.
 The assemblies from AllTheBacteria can be downloaded as described in their documentation: https://allthebacteria.org/docs/assemblies/
 
 On the Sanger HPC these are located at the default path for `--assembly_base`.
+
+To use a custom database you will likely need to prepare these inputs before running the pipeline - see [Using a custom database](#using-a-custom-database).
 
 #### Filter manifest (`--filter_manifest`)
 
@@ -226,7 +230,7 @@ Histogram plot, for a single reference_id:
 | Option               | Type      | Default              | Description                                                             |
 | -------------------- | --------- | -------------------- | ----------------------------------------------------------------------- |
 | `--dereplicate_bins` | `boolean` | `true`               | De-replicate each bin to a representative set.                          |
-| `--cluster_method`   | `string`  | `network_based_trim` | De-replication method: `network_based_trim` or `edge_based`.            |
+| `--cluster_method`   | `string`  | `network_based_trim` | De-replication method: `network_based_trim` or `edge_based`. See [Bin Dereplication Methods](#bin-dereplication-methods) for more info.            |
 | `--representatives`  | `integer` | `10`                 | Number of representatives to select per bin.                            |
 | `--make_gif`         | `boolean` | `false`              | Create GIF visualisation of network trimming (network_based_trim only). |
 
@@ -286,6 +290,34 @@ Use `--index_prefix` to restrict the COBS search to a specific taxon (matching t
 Enable tree building to reconstruct a neighbour-joining tree from the selected assemblies.
 
 For this you must have the assemblies on disk and supply the base directory to `--assembly_base` (pre-configured for Sanger users). AllTheBacteria describes how to download assemblies in their documentation: https://allthebacteria.org/docs/assemblies/
+
+#### Using a custom database
+If you wish to use your own custom reference genome dataset, COBS index and a Sketchlib sketch of the genomes need to be built ahead of running the BinBaDGer pipeline.
+
+_Indexing assemblies_
+
+Use COBS as per the tool documentation: https://github.com/iqbal-lab-org/cobs
+
+_Sketching your assemblies_
+
+BinBaDGer uses [sketchlib](https://github.com/bacpop/sketchlib.rust) to calculate pairwise ANI distances. You need to build a sketch database from the same genome collection used for your COBS index.
+
+Create a TSV file listing sample names and FASTA paths (tab-separated, no header):
+
+```
+sample_1    /path/to/sample_1.fasta
+sample_2    /path/to/sample_2.fasta
+```
+
+Then sketch your assemblies, matching the AllTheBacteria index parameters:
+
+```bash
+sketchlib sketch -v -o my_db -k 17 -s 1024 -f queries.tsv
+```
+
+This produces `<my_db>.skm` and `my_db.skd`. Pass the path including the filename prefix to `--sketchlib_db` (e.g. `--sketchlib_db /path/to/my_db`). Both files must be present for distance calculation.
+
+> **Note:** the distributed ATB Sketchlib index uses k=17 and sketch size 1024. Using consistent parameters across your custom database and any subsets is recommended.
 
 ### Dependencies
 
