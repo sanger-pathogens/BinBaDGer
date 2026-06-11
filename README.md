@@ -189,6 +189,10 @@ Histogram plot, for a single reference_id:
 
 ![Example Histogram](images/example_ani.png)
 
+#### Downloading assemblies
+
+In the current version assemblies are not output by the pipeline, though this is an expected development for a future release. Sanger users may use the helper script [download_references.sh](scripts/download_references.sh) which is bundled with the pipeline in the `scripts/` directory.
+
 ### Parameters
 
 **COBS search options**
@@ -315,7 +319,7 @@ Then sketch your assemblies, matching the AllTheBacteria index parameters:
 sketchlib sketch -v -o my_db -k 17 -s 1024 -f queries.tsv
 ```
 
-This produces `<my_db>.skm` and `my_db.skd`. Pass the path including the filename prefix to `--sketchlib_db` (e.g. `--sketchlib_db /path/to/my_db`). Both files must be present for distance calculation.
+This produces `my_db.skm` and `my_db.skd`. Pass the path including the filename prefix to `--sketchlib_db` (e.g. `--sketchlib_db /path/to/my_db`). Both files must be present for distance calculation.
 
 > **Note:** the distributed ATB Sketchlib index uses k=17 and sketch size 1024. Using consistent parameters across your custom database and any subsets is recommended.
 
