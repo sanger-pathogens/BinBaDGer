@@ -223,7 +223,7 @@ In the current version assemblies are not output by the pipeline, though this is
 
 | Option                | Type      | Default                                                      | Description                                                                            |
 | --------------------- | --------- | ------------------------------------------------------------ | -------------------------------------------------------------------------------------- |
-| `--sketchlib_db`      | `path`    | `/data/pam/software/pp-sketchlib/ATB/0.2/index_20240606/` | Path to the Sketchlib database including the prefix of the .skm/.skd files.            |
+| `--sketchlib_db`      | `path`    | `/data/pam/software/pp-sketchlib/ATB/0.2/index_20240606/atb_sketchlib_v020` | Path to the Sketchlib database including the prefix of the .skm/.skd files.            |
 | `--bin_ranges`        | `string`  | `0.98,0.99,0.995,0.998,1`                                    | Comma-separated bin edges as ANI similarity values (e.g. `0.98` = within 2% distance). |
 | `--retain_below_bins` | `boolean` | `false`                                                      | Retain samples that fall below all bins (too distant from reference).                  |
 

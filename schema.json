@@ -7,7 +7,7 @@
         "help_text": "Path to the reference manifest CSV."
       },
       "cobs_base": {
-        "default": "/data/pam/collections/ATB/ATB_phylign/",
+        "default": "/data/pam/software/phylign/ATB/0.2/index_20240507/",
         "help_text": "Base directory for COBS indexes."
       },
       "cobs_threshold": {
@@ -43,7 +43,7 @@
     },
     "Sketching options": {
       "sketchlib_db": {
-        "default": "/data/pam/collections/ATB/ATB_sketchlib/atb_sketchlib_v020",
+        "default": "/data/pam/software/pp-sketchlib/ATB/0.2/index_20240606/atb_sketchlib_v020",
         "help_text": "Path to the Sketchlib database."
       }
     },
