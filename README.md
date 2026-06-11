@@ -350,8 +350,9 @@ See `modules/` and `assorted-sub-workflows/` for pinned container versions.
 - **COBS search returns too few matches**: lower `--cobs_threshold`, increase `--number_of_cobs_matches`, or remove `--index_prefix` to search all indexes. Top tip: use `-resume` after changing these parameters to make use of cached processes.
 - **Pipeline too slow**: Reduce number of matches returned by the COBS search with the `--number_of_cobs_matches` parameter, which is set high by default to return all matches.
 - **Bracken QC fails**: ensure `--read_len` is set and `--kraken2_db` points to a valid database. Kraken2 databases can be downloaded from [here](https://benlangmead.github.io/aws-indexes/k2).
-- **Missing bins** Bins within the given ranges may be missing if empty.
+- **Missing bins**: Bins within the given ranges may be missing if empty.
 - **Tree building fails**: ensure `--assembly_base` points to a directory of xz-compressed TAR archives using ENA sample accessions, and that `--index_prefix` matches the archive filename prefixes if set.
+- **Too many genomes after bin dereplication**: If using `--cluster_method edge_based` the issue may be that the distance threshold is not appropriate, however in the current version this is not yet parameterised, try using `--cluster_method network_based_trim` and set `--representatives` instead.
 - **Resuming a failed run**: add `-resume` to restart from cached intermediate results. This is especially useful when adjusting filters or bin ranges.
 
 For further help, check `.nextflow.log` and the per-process `.command.log` logs in the `work/` directory.
